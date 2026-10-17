@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     # apps do projeto · project apps
     "accounts",
     "core",
+    "shop",
 ]
 
 MIDDLEWARE = [
