@@ -1,8 +1,7 @@
 import pytest
 from django.db import IntegrityError
 
-from shop.factories import (CategoryFactory, OrderFactory,
-                            OrderItemFactory, ProductFactory)
+from shop.factories import CategoryFactory, OrderFactory, OrderItemFactory, ProductFactory
 from shop.models import OrderItem
 from shop.services import OutOfStock, add_item, categories_with_counts
 

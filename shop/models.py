@@ -93,6 +93,8 @@ class OrderItem(models.Model):
                 condition=Q(quantity__gte=1),
                 name="ck_orderitem_quantity_gte_1"),
         ]
+    def __str__(self):
+        return f"{self.quantity} × {self.product.name}"
 
 
 class Payment(models.Model):
@@ -113,3 +115,5 @@ class Payment(models.Model):
             models.CheckConstraint(
                 condition=Q(amount__gt=0), name="ck_payment_amount_gt_0"),
         ]
+    def __str__(self):
+        return f"Pagamento da encomenda #{self.order_id}"

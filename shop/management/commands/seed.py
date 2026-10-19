@@ -4,8 +4,13 @@ import factory
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from shop.factories import (CategoryFactory, CustomerFactory,
-                            OrderFactory, OrderItemFactory, ProductFactory)
+from shop.factories import (
+    CategoryFactory,
+    CustomerFactory,
+    OrderFactory,
+    OrderItemFactory,
+    ProductFactory,
+)
 from shop.models import Category, Customer, Order, Product
 
 
