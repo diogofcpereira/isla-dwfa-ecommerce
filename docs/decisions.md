@@ -19,4 +19,4 @@ EN: one line per decision — what, why, rejected alternative. Grows ficha by fi
 
 ## Ficha 02 — API
 
-<!-- -->
+<!-- --> Ao comentar a linha de prefetch_related, o valor retornado foram 82 queries
