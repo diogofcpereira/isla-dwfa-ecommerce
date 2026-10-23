@@ -20,3 +20,10 @@ EN: one line per decision — what, why, rejected alternative. Grows ficha by fi
 ## Ficha 02 — API
 
 <!-- --> Ao comentar a linha de prefetch_related, o valor retornado foram 82 queries
+1. **Campo só de leitura** : unit_price é read-only porque o servidor copia o preço do produto no momento da compra; o cliente não pode escolher quanto paga.
+
+2. **Paginação**: PageNumberPagination com 20 por página, porque as listas são pequenas e o frontend precisa do total para mostrar o número de páginas.
+
+3. **Versionamento**: a versão vai no caminho (/api/v1/), para uma versão 2 poder conviver com a 1 sem partir clientes antigos.
+
+**Lista de encomendas** (20 por página): 3 queries com prefetch_related; 82 queries sem prefetch_related
