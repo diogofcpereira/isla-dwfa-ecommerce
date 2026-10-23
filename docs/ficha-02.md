@@ -1,0 +1,7 @@
+# Ficha 02 — Perguntas de reflexão
+
+## 1. 
+O `validate()` do serializer só corre quando os dados entram pela API, por isso qualquer escrita que não passe por lá fica sem a regra. Um exemplo no projeto é o admin: no inline das linhas da encomenda conseguimos pôr 50 unidades de um produto que só tem 2 em stock e gravar sem erro, porque o admin não usa o nosso serializer. O mesmo acontece com o comando `seed`, a shell ou um `bulk_create`. Mesmo pela API, dois pedidos ao mesmo tempo podem passar os dois no `validate()` com o mesmo stock e vender mais do que existe. Por isso a garantia tem de estar na base de dados: o `add_item` relê o produto com `select_for_update()`, que bloqueia a linha até ao fim da transação, e a coluna `stock` tem `CHECK (stock >= 0)`.
+
+## 2.
+Trocaríamos para `CursorPagination` num scroll infinito sobre uma tabela muito grande, como o histórico de encomendas. Com `PageNumberPagination`, cada página obriga a BD a fazer um `COUNT(*)` da tabela inteira e um `OFFSET` que lê e descarta todas as linhas anteriores, o que fica cada vez mais lento; além disso, se entrarem encomendas novas durante a leitura, a página seguinte repete linhas. Com cursor, cada página continua a partir da última linha vista, sem contar nem saltar nada. Para funcionar, o queryset precisa de uma ordenação fixa, única e que não mude, por exemplo `-created_at` com o `id` a desempatar, de preferência com índice nessas colunas.
