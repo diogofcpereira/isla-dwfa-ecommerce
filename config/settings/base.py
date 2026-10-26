@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_filters",
     "drf_spectacular",
+    "rest_framework_simplejwt.token_blacklist",
 ]
 
 REST_FRAMEWORK = {
@@ -42,6 +43,13 @@ REST_FRAMEWORK = {
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
+    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
     ],
 }
 
@@ -98,3 +106,13 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": True,      # cada refresh devolve um refresh novo
+    "BLACKLIST_AFTER_ROTATION": True,   # o refresh antigo deixa de servir
+    "UPDATE_LAST_LOGIN": True,
+}

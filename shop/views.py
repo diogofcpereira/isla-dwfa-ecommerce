@@ -5,6 +5,7 @@ from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 
 from .filters import ProductFilter
 from .models import Category, Order, OrderItem, Product
@@ -17,6 +18,7 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CategorySerializer
     search_fields = ["name"]
     ordering_fields = ["name"]
+    permission_classes = [AllowAny]   # Catálogo público: qualquer visitante pode ver as categorias
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -26,6 +28,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "sku"]
     ordering_fields = ["price", "name", "created_at"]
     ordering = ["name"]
+    permission_classes = [IsAuthenticatedOrReadOnly] # Leitura pública, escrita só autenticada
 
 
 class OrderItemViewSet(viewsets.ModelViewSet):
