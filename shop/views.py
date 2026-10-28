@@ -6,11 +6,14 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated
+from shop.permissions import IsOwnerOrGestor, is_gestor
 
 from .filters import ProductFilter
 from .models import Category, Order, OrderItem, Product
 from .serializers import CategorySerializer, OrderItemSerializer, OrderSerializer, ProductSerializer
 from .services import add_item, pay_order
+from shop.permissions import IsGestorOrReadOnly
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -28,7 +31,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "sku"]
     ordering_fields = ["price", "name", "created_at"]
     ordering = ["name"]
-    permission_classes = [IsAuthenticatedOrReadOnly] # Leitura pública, escrita só autenticada
+    permission_classes = [IsGestorOrReadOnly]
 
 
 class OrderItemViewSet(viewsets.ModelViewSet):
