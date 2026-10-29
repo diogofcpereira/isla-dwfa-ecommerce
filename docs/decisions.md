@@ -81,3 +81,31 @@ POST /order-items/ (encomenda sua)	            401	      201	                   
 POST /order-items/ (encomenda de outro)	        401	      400	                        201	                  validate_order
 GET /me/	                                    401	      200	                        200	                  IsAuthenticated
 
+
+## Parte 3
+
+1. CORS com lista explícita — só CORS_ALLOWED_ORIGINS (lida do .env; em dev
+http://localhost:5173) pode ler respostas da API num browser, e só em /api/.... O
+CorsMiddleware é o primeiro do MIDDLEWARE, porque o preflight OPTIONS não traz token.
+O CORS protege utilizadores num browser, não a API: quem a protege é o JWT e as permissões.
+Rejeitado: CORS_ALLOW_ALL_ORIGINS = True — qualquer site podia ler a API em nome do utilizador.
+
+2. Throttling no login: 10 tentativas por minuto por IP (ThrottledTokenView, scope auth) —
+a 11.ª recebe 429 antes de a password ser verificada, o que torna a força bruta impraticável.
+Rejeitado: bloquear a conta ao fim de N tentativas — um atacante podia trancar qualquer
+utilizador só por saber o nome dele.
+
+3. Passwords: Argon2, mínimo 12 caracteres — Argon2 é o algoritmo recomendado (lento e
+exigente em memória, de propósito); o PBKDF2 fica em segundo para os hashes antigos
+continuarem a funcionar e serem convertidos no próximo login. Nos testes fica o MD5, só por
+ser rápido. Rejeitado: tirar o PBKDF2 — as contas existentes deixavam de conseguir entrar.
+
+4. check --deploy com 0 avisos (com config.settings.prod) — havia dois: W021
+(resolvido com SECURE_HSTS_PRELOAD = True) e drf_spectacular.W002 (resolvido descrevendo
+a resposta da MeView com @extend_schema). Em produção, SECRET_KEY, ALLOWED_HOSTS e
+CORS_ALLOWED_ORIGINS não têm valor por omissão: sem elas a app não arranca.
+
+5. Campos do servidor só de leitura — customer, status, created_at (encomendas),
+total e unit_price nunca vêm do cliente; um PATCH {"status": "paid"} é aceite mas
+ignorado (testado em test_owner_cannot_change_status).
+
