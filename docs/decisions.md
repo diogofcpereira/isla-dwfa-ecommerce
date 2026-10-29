@@ -102,8 +102,7 @@ ser rápido. Rejeitado: tirar o PBKDF2 — as contas existentes deixavam de cons
 
 4. check --deploy com 0 avisos (com config.settings.prod) — havia dois: W021
 (resolvido com SECURE_HSTS_PRELOAD = True) e drf_spectacular.W002 (resolvido descrevendo
-a resposta da MeView com @extend_schema). Em produção, SECRET_KEY, ALLOWED_HOSTS e
-CORS_ALLOWED_ORIGINS não têm valor por omissão: sem elas a app não arranca.
+a resposta da MeView com @extend_schema).Em produção, SECRET_KEY e ALLOWED_HOSTS não têm valor por omissão: sem elas a app não arranca.
 
 5. Campos do servidor só de leitura — customer, status, created_at (encomendas),
 total e unit_price nunca vêm do cliente; um PATCH {"status": "paid"} é aceite mas
