@@ -6,8 +6,8 @@ from .base import env
 DEBUG = False
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
-# CORS: em produção a origem da SPA é obrigatória (sem valor por omissão).
-CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS")
+# CORS: CORS_ALLOWED_ORIGINS vem do base.py (lido do .env; por omissão http://localhost:5173).
+# Em produção, define a variável de ambiente com a origem real da SPA.
 
 # Cabeçalhos de segurança · security headers
 SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)  # HTTP → HTTPS
