@@ -1,6 +1,8 @@
+# shop/serializers.py
 from rest_framework import serializers
 
 from .models import Category, Order, OrderItem, Product
+from .permissions import is_gestor
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -31,7 +33,19 @@ class OrderItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = ["id", "order", "product", "product_name",
                   "quantity", "unit_price"]
+        # O preço é copiado do produto pelo servidor (services.add_item).
         read_only_fields = ["unit_price"]
+
+    def validate_order(self, order):
+        """Um cliente só pode acrescentar linhas às suas encomendas."""
+        request = self.context.get("request")
+        if request is None:                      # uso fora de uma view (ex.: shell)
+            return order
+        user = request.user
+        if not is_gestor(user) and order.customer.user_id != user.id:
+            # Mesma mensagem que para uma encomenda inexistente: não revela que ela existe.
+            raise serializers.ValidationError("Encomenda não encontrada.")
+        return order
 
     def validate_quantity(self, value):
         if value < 1:
@@ -55,4 +69,8 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ["id", "customer", "status", "created_at", "items", "total"]
-        read_only_fields = ["status", "created_at"]
+        # Tudo o que é o servidor a decidir:
+        # - customer: vem do utilizador autenticado (OrderViewSet.perform_create);
+        # - status: só muda através de ações como /pay/;
+        # - created_at: data do servidor.
+        read_only_fields = ["customer", "status", "created_at"]
