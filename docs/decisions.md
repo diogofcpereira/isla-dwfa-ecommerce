@@ -109,3 +109,23 @@ CORS_ALLOWED_ORIGINS não têm valor por omissão: sem elas a app não arranca.
 total e unit_price nunca vêm do cliente; um PATCH {"status": "paid"} é aceite mas
 ignorado (testado em test_owner_cannot_change_status).
 
+## Parte 4
+
+1. A matriz é testada — shop/tests/test_auth.py tem um teste parametrizado por linha da
+matriz (@pytest.mark.parametrize com anónimo, cliente e gestor): 22 casos. Os utilizadores
+são autenticados com force_authenticate, para os testes de permissões não dependerem do
+login JWT (que tem os seus próprios testes). Total do projeto: 37 testes (eram 10 na Ficha 02).
+
+2. Tirando o filtro do get_queryset, falham os seguintes 3 testes: 
+
+================================================================================================= 
+short test summary info 
+=================================================================================================
+FAILED shop/tests/test_auth.py::test_list_orders_by_role[customer-200-1] - assert 2 == 1
+FAILED shop/tests/test_auth.py::test_other_customers_order_is_404[get-] - assert 403 == 404
+FAILED shop/tests/test_auth.py::test_other_customers_order_is_404[post-pay/] - assert 403 == 404
+
+Conclusão: o IsOwnerOrGestor sozinho ainda impede ver o detalhe e pagar a encomenda de
+outro, mas responde 403, o que confirma que ela existe, e deixa a lista aberta. São precisas
+as duas camadas: o filtro (404 e lista fechada) e a permissão por objeto (defesa extra). O
+filtro foi reposto.
