@@ -11,11 +11,11 @@ from rest_framework.test import APIClient
 
 from accounts.factories import UserFactory
 from shop.factories import (
-    CategoryFactory,
+    BrandFactory,
+    CarFactory,
     CustomerFactory,
     OrderFactory,
     OrderItemFactory,
-    ProductFactory,
 )
 from shop.models import Order
 
@@ -87,33 +87,43 @@ def test_me_by_role(actors, role, expected):
         assert r.json()["groups"] == ["gestores"]
 
 
-# ---------- Parte 2: produtos por papel ----------
+# ---------- Parte 2: catálogo (marcas e viaturas) por papel ----------
 
 
 @pytest.mark.django_db
 def test_anonymous_can_read_catalog():
-    ProductFactory()
-    assert APIClient().get("/api/v1/products/").status_code == 200
-    assert APIClient().get("/api/v1/categories/").status_code == 200
+    CarFactory()
+    assert APIClient().get("/api/v1/cars/").status_code == 200
+    assert APIClient().get("/api/v1/brands/").status_code == 200
 
 
 @pytest.mark.parametrize("role,expected", [("anon", 401), ("customer", 403), ("gestor", 201)])
-def test_create_product_by_role(actors, role, expected):
+def test_create_brand_by_role(actors, role, expected):
+    body = {"name": "Skoda", "slug": "skoda"}
+    r = as_(actors[role]).post("/api/v1/brands/", body, format="json")
+    assert r.status_code == expected
+
+
+@pytest.mark.parametrize("role,expected", [("anon", 401), ("customer", 403), ("gestor", 201)])
+def test_create_car_by_role(actors, role, expected):
     body = {
-        "category": CategoryFactory().id,
-        "sku": "SKU-TESTE-1",
-        "name": "Lamp",
-        "price": "9.90",
+        "brand": BrandFactory().id,
+        "code": "DN-TESTE-1",
+        "model": "Golf",
+        "version": "1.5 eTSI Life",
+        "year": 2025,
+        "fuel": "petrol",
+        "price": "32500.00",
         "stock": 3,
     }
-    r = as_(actors[role]).post("/api/v1/products/", body, format="json")
+    r = as_(actors[role]).post("/api/v1/cars/", body, format="json")
     assert r.status_code == expected
 
 
 @pytest.mark.parametrize("role,expected", [("anon", 401), ("customer", 403), ("gestor", 200)])
-def test_patch_product_by_role(actors, role, expected):
-    product = ProductFactory()
-    r = as_(actors[role]).patch(f"/api/v1/products/{product.id}/", {"stock": 10}, format="json")
+def test_patch_car_by_role(actors, role, expected):
+    car = CarFactory()
+    r = as_(actors[role]).patch(f"/api/v1/cars/{car.id}/", {"stock": 10}, format="json")
     assert r.status_code == expected
 
 
