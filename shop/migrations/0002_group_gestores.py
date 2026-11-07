@@ -17,7 +17,7 @@ def apagar_grupo_gestores(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('shop', '0001_initial_domain'),
+        ('shop', '0001_initial'),
         ('auth', '__first__'),   # garante que a tabela de grupos já existe
     ]
 

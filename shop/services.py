@@ -2,7 +2,7 @@ from django.db import transaction
 from django.db.models import Count
 from rest_framework.exceptions import APIException
 
-from .models import Category, Order, OrderItem, Product
+from .models import Brand, Car, Order, OrderItem
 
 
 class OutOfStock(Exception):
@@ -15,21 +15,21 @@ class Conflict(APIException):
     default_code = "conflict"
 
 
-def categories_with_counts():
-    return Category.objects.annotate(n=Count("products")).order_by("name")
+def brands_with_counts():
+    """Marcas com o número de viaturas de cada uma, numa só query."""
+    return Brand.objects.annotate(n=Count("cars")).order_by("name")
 
 
 @transaction.atomic
-def add_item(order, product, quantity):
-    # bloqueia a linha do produto até ao fim da transação
-    product = Product.objects.select_for_update().get(pk=product.pk)
-    if quantity > product.stock:
-        raise OutOfStock(f"Só há {product.stock} em stock.")
-    item = OrderItem.objects.create(
-        order=order, product=product, quantity=quantity, unit_price=product.price
-    )
-    product.stock -= quantity
-    product.save(update_fields=["stock"])
+def add_item(order, car, quantity):
+    # Bloqueia a linha da viatura até ao fim da transação: dois clientes não
+    # conseguem comprar a última unidade ao mesmo tempo.
+    car = Car.objects.select_for_update().get(pk=car.pk)
+    if quantity > car.stock:
+        raise OutOfStock(f"Só há {car.stock} em stock.")
+    item = OrderItem.objects.create(order=order, car=car, quantity=quantity, unit_price=car.price)
+    car.stock -= quantity
+    car.save(update_fields=["stock"])
     return item
 
 

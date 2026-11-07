@@ -62,7 +62,7 @@ REST_FRAMEWORK = {
     },
 }
 
-SPECTACULAR_SETTINGS = {"TITLE": "Loja DWFA API", "VERSION": "1.0.0"}
+SPECTACULAR_SETTINGS = {"TITLE": "DriveNow API", "VERSION": "1.1.0"}
 
 MIDDLEWARE = [
     # Ficha 03 · Parte 3: TEM de ser o primeiro — o preflight OPTIONS não traz token

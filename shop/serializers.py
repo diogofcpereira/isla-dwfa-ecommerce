@@ -1,27 +1,34 @@
 # shop/serializers.py
+import datetime
+
 from rest_framework import serializers
 
-from .models import Category, Order, OrderItem, Product
+from .models import Brand, Car, Order, OrderItem
 from .permissions import is_gestor
 
 
-class CategorySerializer(serializers.ModelSerializer):
+class BrandSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Category
+        model = Brand
         fields = ["id", "name", "slug"]
 
 
-class ProductSerializer(serializers.ModelSerializer):
-    category_name = serializers.CharField(source="category.name", read_only=True)
+class CarSerializer(serializers.ModelSerializer):
+    brand_name = serializers.CharField(source="brand.name", read_only=True)
+    fuel_display = serializers.CharField(source="get_fuel_display", read_only=True)
 
     class Meta:
-        model = Product
+        model = Car
         fields = [
             "id",
-            "category",
-            "category_name",
-            "sku",
-            "name",
+            "brand",
+            "brand_name",
+            "code",
+            "model",
+            "version",
+            "year",
+            "fuel",
+            "fuel_display",
             "price",
             "stock",
             "is_active",
@@ -34,14 +41,21 @@ class ProductSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("O preço tem de ser positivo.")
         return value
 
+    def validate_year(self, value):
+        # Aceita o modelo do ano seguinte (é comum no mercado automóvel).
+        latest = datetime.date.today().year + 1
+        if not 1990 <= value <= latest:
+            raise serializers.ValidationError(f"O ano tem de estar entre 1990 e {latest}.")
+        return value
+
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    product_name = serializers.CharField(source="product.name", read_only=True)
+    car_name = serializers.CharField(source="car.name", read_only=True)
 
     class Meta:
         model = OrderItem
-        fields = ["id", "order", "product", "product_name", "quantity", "unit_price"]
-        # O preço é copiado do produto pelo servidor (services.add_item).
+        fields = ["id", "order", "car", "car_name", "quantity", "unit_price"]
+        # O preço é copiado da viatura pelo servidor (services.add_item).
         read_only_fields = ["unit_price"]
 
     def validate_order(self, order):
@@ -55,16 +69,21 @@ class OrderItemSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Encomenda não encontrada.")
         return order
 
+    def validate_car(self, car):
+        if not car.is_active:
+            raise serializers.ValidationError("Esta viatura já não está à venda.")
+        return car
+
     def validate_quantity(self, value):
         if value < 1:
             raise serializers.ValidationError("A quantidade tem de ser pelo menos 1.")
         return value
 
     def validate(self, attrs):
-        product = attrs.get("product") or getattr(self.instance, "product", None)
+        car = attrs.get("car") or getattr(self.instance, "car", None)
         quantity = attrs.get("quantity", getattr(self.instance, "quantity", 0))
-        if product and quantity > product.stock:
-            raise serializers.ValidationError({"quantity": f"Só há {product.stock} em stock."})
+        if car and quantity > car.stock:
+            raise serializers.ValidationError({"quantity": f"Só há {car.stock} em stock."})
         return attrs
 
 

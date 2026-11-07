@@ -9,8 +9,8 @@ from core.views import health
 from shop import views
 
 router = DefaultRouter()
-router.register("categories", views.CategoryViewSet)
-router.register("products", views.ProductViewSet)
+router.register("brands", views.BrandViewSet)
+router.register("cars", views.CarViewSet)
 router.register("orders", views.OrderViewSet, basename="order")
 router.register("order-items", views.OrderItemViewSet)
 
