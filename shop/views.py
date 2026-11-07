@@ -9,8 +9,14 @@ from rest_framework.response import Response
 from .filters import CarFilter
 from .models import Brand, Car, Customer, Order, OrderItem
 from .permissions import IsGestorOrReadOnly, IsItemOwnerOrGestor, IsOwnerOrGestor, is_gestor
-from .serializers import BrandSerializer, CarSerializer, OrderItemSerializer, OrderSerializer
-from .services import add_item, pay_order
+from .serializers import (
+    BrandSerializer,
+    CarSerializer,
+    OrderItemSerializer,
+    OrderSerializer,
+    PaySerializer,
+)
+from .services import add_item, create_order, pay_order
 
 
 class BrandViewSet(viewsets.ModelViewSet):
@@ -67,7 +73,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             # Camada 1: um cliente só "vê" as suas encomendas.
             # As outras dão 404 — nem se confirma que existem.
             qs = qs.filter(customer__user_id=self.request.user.id)
-        items = OrderItem.objects.select_related("car__brand")
+        items = OrderItem.objects.select_related("car__brand").order_by("id")
         line = F("items__quantity") * F("items__unit_price")
         return qs.prefetch_related(Prefetch("items", queryset=items)).annotate(total=Sum(line))
 
@@ -75,19 +81,24 @@ class OrderViewSet(viewsets.ModelViewSet):
         # O dono vem sempre do utilizador autenticado, nunca do JSON enviado.
         # get_or_create: um utilizador sem perfil de cliente (ex.: um gestor) ganha um.
         customer, _ = Customer.objects.get_or_create(user=self.request.user)
-        serializer.save(customer=customer)
+        order = create_order(customer, serializer.validated_data["items"])
+        # Relê com o total calculado e as linhas, para a resposta 201.
+        serializer.instance = self.get_queryset().get(pk=order.pk)
 
     @extend_schema(
-        request=None,
+        request=PaySerializer,
         responses={
             200: OrderSerializer,
-            409: OpenApiResponse(description="A encomenda já não está pendente."),
+            409: OpenApiResponse(description="A encomenda já não está pendente ou não tem linhas."),
         },
     )
     @action(detail=True, methods=["post"])
     def pay(self, request, pk=None):
         # get_object() aplica o filtro do get_queryset (404 se não for tua)
         # e corre o IsOwnerOrGestor.has_object_permission.
-        pay_order(self.get_object())
+        order = self.get_object()
+        body = PaySerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        pay_order(order, body.validated_data["method"])
         order = self.get_queryset().get(pk=pk)  # relê com o total calculado
         return Response(self.get_serializer(order).data)

@@ -824,6 +824,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Order'
+        required: true
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -878,6 +879,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Order'
+        required: true
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -949,6 +951,18 @@ paths:
         required: true
       tags:
       - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pay'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Pay'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Pay'
+        required: true
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -960,7 +974,7 @@ paths:
                 $ref: '#/components/schemas/Order'
           description: ''
         '409':
-          description: A encomenda já não está pendente.
+          description: A encomenda já não está pendente ou não tem linhas.
 components:
   schemas:
     Brand:
@@ -1061,6 +1075,18 @@ components:
       - groups
       - id
       - username
+    MethodEnum:
+      enum:
+      - transfer
+      - financing
+      - card
+      - mbway
+      type: string
+      description: |-
+        * `transfer` - Transferência
+        * `financing` - Financiamento
+        * `card` - Cartão
+        * `mbway` - MB WAY
     Order:
       type: object
       properties:
@@ -1081,8 +1107,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/OrderItem'
-          readOnly: true
+            $ref: '#/components/schemas/OrderLine'
         total:
           type: string
           format: decimal
@@ -1122,6 +1147,33 @@ components:
       - car_name
       - id
       - order
+      - quantity
+      - unit_price
+    OrderLine:
+      type: object
+      description: 'Uma linha dentro de POST /orders/: só se envia a viatura e a quantidade.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        car:
+          type: integer
+        car_name:
+          type: string
+          readOnly: true
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+      required:
+      - car
+      - car_name
+      - id
       - quantity
       - unit_price
     PaginatedBrandList:
@@ -1292,8 +1344,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/OrderItem'
-          readOnly: true
+            $ref: '#/components/schemas/OrderLine'
         total:
           type: string
           format: decimal
@@ -1321,6 +1372,14 @@ components:
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
           readOnly: true
+    Pay:
+      type: object
+      description: Corpo de POST /orders/{id}/pay/.
+      properties:
+        method:
+          $ref: '#/components/schemas/MethodEnum'
+      required:
+      - method
     StatusEnum:
       enum:
       - pending

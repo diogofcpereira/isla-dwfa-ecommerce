@@ -1,9 +1,4 @@
 # shop/tests/test_auth.py
-"""Testes de autenticação e autorização (Ficha 03).
-
-Cada teste verifica uma ou mais linhas da matriz endpoint × papel do docs/decisions.md.
-401 = quem és? · 403 = podes? · 404 = existe para ti?
-"""
 
 import pytest
 from django.contrib.auth.models import Group
@@ -157,14 +152,17 @@ def test_other_customers_order_is_404(actors, method, suffix):
 def test_customer_can_pay_own_order(actors):
     order = OrderFactory(customer__user=actors["customer"])
     OrderItemFactory(order=order)
-    r = as_(actors["customer"]).post(f"/api/v1/orders/{order.id}/pay/")
+    r = as_(actors["customer"]).post(
+        f"/api/v1/orders/{order.id}/pay/", {"method": "mbway"}, format="json"
+    )
     assert r.status_code == 200
     assert r.json()["status"] == "paid"
 
 
 def test_new_order_belongs_to_whoever_is_logged_in(actors):
     stranger = CustomerFactory()  # tenta pôr a encomenda em nome dele
-    r = as_(actors["customer"]).post("/api/v1/orders/", {"customer": stranger.id}, format="json")
+    body = {"customer": stranger.id, "items": [{"car": CarFactory(stock=2).id, "quantity": 1}]}
+    r = as_(actors["customer"]).post("/api/v1/orders/", body, format="json")
     assert r.status_code == 201
     order = Order.objects.get(pk=r.json()["id"])
     assert order.customer.user == actors["customer"]  # o campo enviado foi ignorado
