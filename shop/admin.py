@@ -1,22 +1,31 @@
-# Register your models here.
 from django.contrib import admin
 
-from .models import Category, Customer, Order, OrderItem, Payment, Product
+from .models import Brand, Car, Customer, Order, OrderItem, Payment
 
 
-@admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
+@admin.register(Brand)
+class BrandAdmin(admin.ModelAdmin):
     list_display = ["name", "slug"]
     search_fields = ["name"]
     prepopulated_fields = {"slug": ["name"]}
 
 
-@admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
-    list_display = ["sku", "name", "category", "price", "stock", "is_active"]
-    list_filter = ["category", "is_active"]
-    search_fields = ["sku", "name"]
-    list_select_related = ["category"]
+@admin.register(Car)
+class CarAdmin(admin.ModelAdmin):
+    list_display = [
+        "code",
+        "brand",
+        "model",
+        "version",
+        "year",
+        "fuel",
+        "price",
+        "stock",
+        "is_active",
+    ]
+    list_filter = ["brand", "fuel", "is_active"]
+    search_fields = ["code", "model", "version", "brand__name"]
+    list_select_related = ["brand"]
 
 
 @admin.register(Customer)
@@ -29,7 +38,7 @@ class CustomerAdmin(admin.ModelAdmin):
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
-    autocomplete_fields = ["product"]
+    autocomplete_fields = ["car"]
 
 
 @admin.register(Order)
