@@ -64,22 +64,24 @@ em is_gestor(); não cresce com o número de encomendas.
 
 **Matriz endpoint × papel**
 
-Endpoint	                                  anónimo	cliente	                      gestor	              Mecanismo
-GET /categories/	                            200	      200	                        200	                  AllowAny
-GET /products/	                                200	      200	                        200	                  IsGestorOrReadOnly (leitura aberta)
-POST /products/	                                401	      403	                        201	                  IsGestorOrReadOnly
-PATCH/DELETE /products/{id}/	                401	      403	                        200/204	              IsGestorOrReadOnly
-GET /orders/	                                401	      200, só as suas	            200, todas	          filtro no get_queryset
-GET /orders/{id}/ (sua)	                        401	      200	                        200	                  filtro + IsOwnerOrGestor
-GET /orders/{id}/ (de outro)	                401	      404	                        200	                  filtro → 404
-POST /orders/	                                401	      201, dono = eu	            201, dono  = eu   	  perform_create + customer read-only
-PATCH /orders/{id}/ {"status": ...} (sua)	    401	      200, status ignorado	        200, status ignorado  read_only_fields
-POST /orders/{id}/pay/ (sua, pendente)	        401	      200	                        200	                  get_object + IsOwnerOrGestor
-POST /orders/{id}/pay/ (de outro)	            401	      404	                        200	                  filtro → 404
-GET /order-items/	                            401	      200, só das suas encomendas	200, todas	          filtro no get_queryset
-POST /order-items/ (encomenda sua)	            401	      201	                        201                   validate_order
-POST /order-items/ (encomenda de outro)	        401	      400	                        201	                  validate_order
-GET /me/	                                    401	      200	                        200	                  IsAuthenticated
+Endpoint                                      Anónimo   Cliente                         Gestor                    Mecanismo
+--------------------------------------------  --------  -----------------------------  ------------------------  ----------------------------------------
+GET /brands/                                  200       200                            200                       IsGestorOrReadOnly (leitura aberta)
+POST/PATCH/DELETE /brands/                    401       403                            201/200/204               IsGestorOrReadOnly
+GET /cars/                                    200       200                            200                       IsGestorOrReadOnly (leitura aberta)
+POST /cars/                                   401       403                            201                       IsGestorOrReadOnly
+PATCH/DELETE /cars/{id}/                     401       403                            200/204                   IsGestorOrReadOnly
+GET /orders/                                  401       200, só as suas               200, todas               filtro no get_queryset
+GET /orders/{id}/ (sua)                      401       200                            200                       filtro + IsOwnerOrGestor
+GET /orders/{id}/ (de outro)                 401       404                            200                       filtro → 404
+POST /orders/                                 401       201, dono = eu                 201, dono = eu            perform_create + customer read-only
+PATCH /orders/{id}/ {"status": ...} (sua)    401       200, status ignorado           200, status ignorado      read_only_fields
+POST /orders/{id}/pay/ (sua, pendente)       401       200                            200                       get_object + IsOwnerOrGestor
+POST /orders/{id}/pay/ (de outro)            401       404                            200                       filtro → 404
+GET /order-items/                             401       200, só das suas encomendas   200, todas               filtro no get_queryset
+POST /order-items/ (encomenda sua)           401       201                            201                       validate_order
+POST /order-items/ (encomenda de outro)      401       400                            201                       validate_order
+GET /me/                                      401       200                            200                       IsAuthenticated
 
 
 ## Parte 3
@@ -128,3 +130,21 @@ Conclusão: o IsOwnerOrGestor sozinho ainda impede ver o detalhe e pagar a encom
 outro, mas responde 403, o que confirma que ela existe, e deixa a lista aberta. São precisas
 as duas camadas: o filtro (404 e lista fechada) e a permissão por objeto (defesa extra). O
 filtro foi reposto.
+
+## M1 — Domínio DriveNow (stand de carros)
+
+1. **Domínio:** O projeto representa o DriveNow, um stand de automóveis onde os clientes podem encomendar e pagar viaturas, enquanto os gestores ficam responsáveis pela gestão de marcas, viaturas e encomendas. Foi rejeitada a manutenção da loja genérica das fichas, optando-se por um domínio próprio com as mesmas seis entidades.
+
+2. **Entidades:** `Category` foi substituída por `Brand` e `Product` por `Car`, que inclui marca, código, modelo, versão, ano, combustível, preço e stock. As restantes entidades (`Customer`, `Order`, `OrderItem` e `Payment`) mantiveram-se. Os nomes continuam em inglês e a aplicação mantém-se como `shop`, conforme permitido pelo enunciado.
+
+3. **Migrações:** Foi eliminada a migração `0001_initial_domain` e criada uma nova `0001_initial`, uma vez que não existiam dados a preservar (FAQ do M1). A `0002_group_gestores` foi atualizada para depender da nova migração. Quem tiver uma base de dados antiga deverá recriá-la com `docker compose down -v`.
+
+4. **Stock das viaturas:** `Car.stock` representa as unidades disponíveis de uma versão, e não viaturas individuais identificadas por VIN. Assim, são possíveis encomendas de várias unidades, como frotas empresariais, aproveitando o mecanismo `add_item` com `select_for_update`. Foi rejeitada a abordagem de uma linha por viatura física, que obrigaria a quantidades iguais a 1.
+
+5. **Regras na base de dados:** Foram criadas as restrições `ck_car_price_gte_0`, `ck_car_year_gte_1990`, `uq_orderitem_order_car` e `ck_orderitem_quantity_gte_1`, para garantir a validade dos preços, anos, quantidades e evitar viaturas repetidas na mesma encomenda. Foram também adicionados os índices `ix_car_brand_active` e `ix_car_fuel_price`, para otimizar pesquisas por marca, combustível e preço.
+
+6. **Estados e pagamentos:** As encomendas seguem o fluxo pendente → paga → entregue, podendo também ser canceladas. Os métodos de pagamento disponíveis são transferência bancária, financiamento, cartão e MB WAY.
+
+7. **Gestão de marcas:** O endpoint `/brands/` passou a utilizar `IsGestorOrReadOnly`, permitindo aos gestores adicionar marcas, enquanto a consulta continua pública.
+
+8. **Viaturas retiradas:** Uma viatura com `is_active=False` deixa de poder ser encomendada. Esta validação é feita em `OrderItemSerializer.validate_car`, devolvendo erro 400. A viatura mantém-se nas encomendas antigas graças ao `PROTECT`, preservando o histórico.
