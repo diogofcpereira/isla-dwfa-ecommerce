@@ -3,46 +3,46 @@ from django.db.models import F, Prefetch, Sum
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .filters import ProductFilter
-from .models import Category, Customer, Order, OrderItem, Product
+from .filters import CarFilter
+from .models import Brand, Car, Customer, Order, OrderItem
 from .permissions import IsGestorOrReadOnly, IsItemOwnerOrGestor, IsOwnerOrGestor, is_gestor
-from .serializers import CategorySerializer, OrderItemSerializer, OrderSerializer, ProductSerializer
+from .serializers import BrandSerializer, CarSerializer, OrderItemSerializer, OrderSerializer
 from .services import add_item, pay_order
 
 
-class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
+class BrandViewSet(viewsets.ModelViewSet):
+    queryset = Brand.objects.all()
+    serializer_class = BrandSerializer
     search_fields = ["name"]
     ordering_fields = ["name"]
-    # Catálogo público: qualquer visitante pode ver as categorias (decisão consciente).
-    permission_classes = [AllowAny]
+    # Catálogo público: qualquer visitante vê as marcas; só gestores as criam e alteram.
+    permission_classes = [IsGestorOrReadOnly]
 
 
-class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.select_related("category")
-    serializer_class = ProductSerializer
-    filterset_class = ProductFilter
-    search_fields = ["name", "sku"]
-    ordering_fields = ["price", "name", "created_at"]
-    ordering = ["name"]
+class CarViewSet(viewsets.ModelViewSet):
+    queryset = Car.objects.select_related("brand")
+    serializer_class = CarSerializer
+    filterset_class = CarFilter
+    search_fields = ["model", "version", "code", "brand__name"]
+    ordering_fields = ["price", "year", "model", "created_at"]
+    ordering = ["brand__name", "model", "version"]
     # Leitura pública (catálogo); criar, alterar e apagar só para gestores.
     permission_classes = [IsGestorOrReadOnly]
 
 
 class OrderItemViewSet(viewsets.ModelViewSet):
     # O router usa este atributo para dar nome às rotas; os dados vêm de get_queryset.
-    queryset = OrderItem.objects.select_related("product")
+    queryset = OrderItem.objects.select_related("car__brand")
     serializer_class = OrderItemSerializer
     filterset_fields = ["order"]
     ordering = ["id"]
     permission_classes = [IsAuthenticated, IsItemOwnerOrGestor]
 
     def get_queryset(self):
-        qs = OrderItem.objects.select_related("product", "order__customer")
+        qs = OrderItem.objects.select_related("car__brand", "order__customer")
         if is_gestor(self.request.user):
             return qs  # gestores veem todas as linhas
         # Um cliente só vê linhas das suas encomendas; as outras dão 404.
@@ -51,7 +51,7 @@ class OrderItemViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # O serializer já confirmou que a encomenda é do utilizador (validate_order).
         data = serializer.validated_data
-        serializer.instance = add_item(data["order"], data["product"], data["quantity"])
+        serializer.instance = add_item(data["order"], data["car"], data["quantity"])
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -67,7 +67,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             # Camada 1: um cliente só "vê" as suas encomendas.
             # As outras dão 404 — nem se confirma que existem.
             qs = qs.filter(customer__user_id=self.request.user.id)
-        items = OrderItem.objects.select_related("product")
+        items = OrderItem.objects.select_related("car__brand")
         line = F("items__quantity") * F("items__unit_price")
         return qs.prefetch_related(Prefetch("items", queryset=items)).annotate(total=Sum(line))
 

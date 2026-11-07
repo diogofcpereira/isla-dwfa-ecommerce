@@ -1,8 +1,8 @@
 # shop/permissions.py
-"""Regras de acesso da loja: quem pode fazer o quê.
+"""Regras de acesso do DriveNow: quem pode fazer o quê.
 
 Papéis:
-- anónimo: só lê o catálogo (categorias e produtos);
+- anónimo: só lê o catálogo (marcas e viaturas);
 - cliente: qualquer utilizador autenticado; só mexe nas suas encomendas;
 - gestor: pertence ao grupo 'gestores' (criado na migração 0002); pode tudo.
 """
