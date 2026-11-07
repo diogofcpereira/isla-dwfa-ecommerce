@@ -8,10 +8,8 @@ from rest_framework.response import Response
 
 from .filters import ProductFilter
 from .models import Category, Customer, Order, OrderItem, Product
-from .permissions import (IsGestorOrReadOnly, IsItemOwnerOrGestor,
-                          IsOwnerOrGestor, is_gestor)
-from .serializers import (CategorySerializer, OrderItemSerializer,
-                          OrderSerializer, ProductSerializer)
+from .permissions import IsGestorOrReadOnly, IsItemOwnerOrGestor, IsOwnerOrGestor, is_gestor
+from .serializers import CategorySerializer, OrderItemSerializer, OrderSerializer, ProductSerializer
 from .services import add_item, pay_order
 
 
@@ -46,7 +44,7 @@ class OrderItemViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = OrderItem.objects.select_related("product", "order__customer")
         if is_gestor(self.request.user):
-            return qs                                   # gestores veem todas as linhas
+            return qs  # gestores veem todas as linhas
         # Um cliente só vê linhas das suas encomendas; as outras dão 404.
         return qs.filter(order__customer__user_id=self.request.user.id)
 
@@ -71,8 +69,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             qs = qs.filter(customer__user_id=self.request.user.id)
         items = OrderItem.objects.select_related("product")
         line = F("items__quantity") * F("items__unit_price")
-        return (qs.prefetch_related(Prefetch("items", queryset=items))
-                  .annotate(total=Sum(line)))
+        return qs.prefetch_related(Prefetch("items", queryset=items)).annotate(total=Sum(line))
 
     def perform_create(self, serializer):
         # O dono vem sempre do utilizador autenticado, nunca do JSON enviado.
@@ -82,12 +79,15 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         request=None,
-        responses={200: OrderSerializer,
-                   409: OpenApiResponse(description="A encomenda já não está pendente.")})
+        responses={
+            200: OrderSerializer,
+            409: OpenApiResponse(description="A encomenda já não está pendente."),
+        },
+    )
     @action(detail=True, methods=["post"])
     def pay(self, request, pk=None):
         # get_object() aplica o filtro do get_queryset (404 se não for tua)
         # e corre o IsOwnerOrGestor.has_object_permission.
         pay_order(self.get_object())
-        order = self.get_queryset().get(pk=pk)   # relê com o total calculado
+        order = self.get_queryset().get(pk=pk)  # relê com o total calculado
         return Response(self.get_serializer(order).data)

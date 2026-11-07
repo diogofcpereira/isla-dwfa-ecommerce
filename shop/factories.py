@@ -27,8 +27,7 @@ class ProductFactory(DjangoModelFactory):
     category = factory.SubFactory(CategoryFactory)
     sku = factory.LazyFunction(lambda: f"SKU-{short_id().upper()}")
     name = factory.Faker("word")
-    price = factory.Faker("pydecimal", left_digits=3, right_digits=2,
-                          min_value=1, max_value=500)
+    price = factory.Faker("pydecimal", left_digits=3, right_digits=2, min_value=1, max_value=500)
     stock = factory.Faker("random_int", min=0, max=100)
 
 
@@ -62,5 +61,4 @@ class PaymentFactory(DjangoModelFactory):
 
     order = factory.SubFactory(OrderFactory)
     method = Payment.Method.CARD
-    amount = factory.Faker("pydecimal", left_digits=3, right_digits=2,
-                           min_value=1, max_value=500)
+    amount = factory.Faker("pydecimal", left_digits=3, right_digits=2, min_value=1, max_value=500)

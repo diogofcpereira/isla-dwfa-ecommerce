@@ -14,8 +14,7 @@ def test_same_product_twice_in_an_order_is_rejected():
 
 
 @pytest.mark.django_db
-def test_category_list_with_counts_has_no_n_plus_one(
-        django_assert_max_num_queries):
+def test_category_list_with_counts_has_no_n_plus_one(django_assert_max_num_queries):
     for category in CategoryFactory.create_batch(5):
         ProductFactory.create_batch(4, category=category)
     with django_assert_max_num_queries(2):

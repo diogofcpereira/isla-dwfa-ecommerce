@@ -8,10 +8,12 @@ from .models import Category, Order, OrderItem, Product
 class OutOfStock(Exception):
     pass
 
+
 class Conflict(APIException):
     status_code = 409
     default_detail = "O estado atual não permite esta operação."
     default_code = "conflict"
+
 
 def categories_with_counts():
     return Category.objects.annotate(n=Count("products")).order_by("name")
@@ -24,11 +26,12 @@ def add_item(order, product, quantity):
     if quantity > product.stock:
         raise OutOfStock(f"Só há {product.stock} em stock.")
     item = OrderItem.objects.create(
-        order=order, product=product,
-        quantity=quantity, unit_price=product.price)
+        order=order, product=product, quantity=quantity, unit_price=product.price
+    )
     product.stock -= quantity
     product.save(update_fields=["stock"])
     return item
+
 
 @transaction.atomic
 def pay_order(order):

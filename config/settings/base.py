@@ -15,7 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 env = environ.Env(DEBUG=(bool, False))
 environ.Env.read_env(BASE_DIR / ".env")
 
-SECRET_KEY = env("SECRET_KEY")          # sem default: sem SECRET_KEY a app não arranca
+SECRET_KEY = env("SECRET_KEY")  # sem default: sem SECRET_KEY a app não arranca
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
@@ -31,11 +31,11 @@ INSTALLED_APPS = [
     "core",
     "shop",
     # bibliotecas · third-party
-    "corsheaders",                                  # Ficha 03 · Parte 3: CORS
+    "corsheaders",  # Ficha 03 · Parte 3: CORS
     "rest_framework",
     "django_filters",
     "drf_spectacular",
-    "rest_framework_simplejwt.token_blacklist",     # Ficha 03 · Parte 1: blacklist
+    "rest_framework_simplejwt.token_blacklist",  # Ficha 03 · Parte 1: blacklist
 ]
 
 REST_FRAMEWORK = {
@@ -58,7 +58,7 @@ REST_FRAMEWORK = {
     ],
     # Ficha 03 · Parte 3: limites por "scope" (usados com ScopedRateThrottle)
     "DEFAULT_THROTTLE_RATES": {
-        "auth": "10/minute",    # login: 10 tentativas por minuto por IP
+        "auth": "10/minute",  # login: 10 tentativas por minuto por IP
     },
 }
 
@@ -80,7 +80,7 @@ MIDDLEWARE = [
 # Ficha 03 · Parte 3: só estas origens podem ler respostas da API num browser.
 # Uma lista por ambiente, vinda do .env; nunca CORS_ALLOW_ALL_ORIGINS fora de dev.
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=["http://localhost:5173"])
-CORS_URLS_REGEX = r"^/api/.*$"      # só a API; o /admin/ fica de fora
+CORS_URLS_REGEX = r"^/api/.*$"  # só a API; o /admin/ fica de fora
 
 ROOT_URLCONF = "config.urls"
 
@@ -118,7 +118,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {"min_length": 12},          # Ficha 03 · Parte 3 (era 8)
+        "OPTIONS": {"min_length": 12},  # Ficha 03 · Parte 3 (era 8)
     },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -138,7 +138,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": True,      # cada refresh devolve um refresh novo
-    "BLACKLIST_AFTER_ROTATION": True,   # o refresh antigo deixa de servir
+    "ROTATE_REFRESH_TOKENS": True,  # cada refresh devolve um refresh novo
+    "BLACKLIST_AFTER_ROTATION": True,  # o refresh antigo deixa de servir
     "UPDATE_LAST_LOGIN": True,
 }
