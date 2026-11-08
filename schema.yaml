@@ -1714,6 +1714,214 @@ paths:
               schema:
                 $ref: '#/components/schemas/Review'
           description: ''
+  /api/v1/test-drives/:
+    get:
+      operationId: v1_test_drives_list
+      description: |-
+        Marcações de test drive.
+
+        - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+        - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+        Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+      parameters:
+      - in: query
+        name: car
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - cancelled
+          - confirmed
+          - declined
+          - requested
+        description: |-
+          * `requested` - Pedido
+          * `confirmed` - Confirmado
+          * `declined` - Recusado
+          * `cancelled` - Cancelado
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTestDriveList'
+          description: ''
+    post:
+      operationId: v1_test_drives_create
+      description: |-
+        Marcações de test drive.
+
+        - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+        - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+        Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestDrive'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TestDrive'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TestDrive'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDrive'
+          description: ''
+  /api/v1/test-drives/{id}/:
+    get:
+      operationId: v1_test_drives_retrieve
+      description: |-
+        Marcações de test drive.
+
+        - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+        - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+        Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this test drive.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDrive'
+          description: ''
+  /api/v1/test-drives/{id}/cancel/:
+    post:
+      operationId: v1_test_drives_cancel_create
+      description: |-
+        Marcações de test drive.
+
+        - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+        - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+        Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this test drive.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDrive'
+          description: ''
+        '409':
+          description: O estado atual do test drive não o permite.
+  /api/v1/test-drives/{id}/confirm/:
+    post:
+      operationId: v1_test_drives_confirm_create
+      description: |-
+        Marcações de test drive.
+
+        - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+        - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+        Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this test drive.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDrive'
+          description: ''
+        '409':
+          description: O estado atual do test drive não o permite.
+  /api/v1/test-drives/{id}/decline/:
+    post:
+      operationId: v1_test_drives_decline_create
+      description: |-
+        Marcações de test drive.
+
+        - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+        - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+        Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this test drive.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDrive'
+          description: ''
+        '409':
+          description: O estado atual do test drive não o permite.
 components:
   schemas:
     Brand:
@@ -2208,6 +2416,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Review'
+    PaginatedTestDriveList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestDrive'
     PatchedBrand:
       type: object
       properties:
@@ -2496,6 +2727,58 @@ components:
         * `pending` - Pendente
         * `approved` - Aprovada
         * `hidden` - Oculta
+    TestDrive:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        car:
+          type: integer
+        car_name:
+          type: string
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+        scheduled_for:
+          type: string
+          format: date-time
+        status:
+          allOf:
+          - $ref: '#/components/schemas/TestDriveStatusEnum'
+          readOnly: true
+          default: requested
+        status_display:
+          type: string
+          readOnly: true
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - car
+      - car_name
+      - created_at
+      - customer
+      - id
+      - scheduled_for
+      - status
+      - status_display
+    TestDriveStatusEnum:
+      enum:
+      - requested
+      - confirmed
+      - declined
+      - cancelled
+      type: string
+      description: |-
+        * `requested` - Pedido
+        * `confirmed` - Confirmado
+        * `declined` - Recusado
+        * `cancelled` - Cancelado
     TokenBlacklist:
       type: object
       properties:
