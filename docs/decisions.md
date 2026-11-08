@@ -131,6 +131,20 @@ outro, mas responde 403, o que confirma que ela existe, e deixa a lista aberta. 
 as duas camadas: o filtro (404 e lista fechada) e a permissão por objeto (defesa extra). O
 filtro foi reposto.
 
+## Fichas 02–03 — Filipe
+
+Decisões do fork individual que diferem das do Diogo:
+
+- **JSONB em `Product.attributes`:** guardei os atributos que variam por categoria (cor, tamanho, voltagem) num JSONB, porque não têm um esquema fixo e não eram filtrados; rejeitei uma tabela EAV ou colunas por categoria, mais caras para nenhum ganho, e adiei um `GinIndex` até haver uma query que o justifique.
+- **Índice composto `(customer, created_at)` em `Order`:** indexei a query mais frequente da loja, "as minhas encomendas, mais recentes primeiro"; rejeitei um índice só em `customer`, que obrigava a ordenar as encomendas à parte.
+- **Erros no formato RFC 9457 desde a Ficha 02:** um `EXCEPTION_HANDLER` dá a todos os erros DRF o mesmo envelope (`type`, `title`, `status`, `errors`), para o cliente tratar 400, 404, 409 e 429 da mesma forma; rejeitei o formato por omissão do DRF, que muda de forma conforme o erro (no M1, a parte 5 adotou este formato para o grupo).
+- **`cancel` além do `pay`, ambos em `services.py` com `select_for_update`:** as duas transições de estado bloqueiam a linha numa transação, para que dois pedidos concorrentes não mudem a mesma encomenda duas vezes; rejeitei mudar o estado na vista ou por `PATCH {"status": ...}`, sem bloqueio.
+- **Tokens da SPA só em memória, incluindo o refresh:** o `localStorage` é legível por qualquer script da página e fica exposto a XSS, por isso aceitei o custo de um novo login ao recarregar; rejeitei o refresh no `localStorage` e deixei como evolução um cookie HttpOnly, Secure e SameSite, com proteção CSRF.
+- **Filtro por dono também em `Customer`, `OrderItem` e `Payment`:** apliquei o padrão das encomendas (gestor vê tudo, cliente só os seus, 404 nos alheios), porque estes endpoints expunham dados de outros clientes; rejeitei protegê-los só com a permissão por objeto, que deixa a lista aberta e responde 403.
+- **Linha numa encomenda alheia → 404:** um cliente que tenta acrescentar uma linha à encomenda de outro recebe 404, como em qualquer objeto alheio, para não confirmar que a encomenda existe; rejeitei um erro de validação 400.
+- **`POST /orders/` de um gestor sem perfil de cliente → 400:** uma encomenda pertence sempre a um cliente, e um gestor não é cliente; rejeitei criar automaticamente um perfil de cliente para o gestor.
+- **`MeSerializer` para documentar `/me/`:** a resposta passa a ter um esquema no Swagger, o que elimina o aviso `drf_spectacular.W002` do `check --deploy`; rejeitei deixar a resposta sem esquema e silenciar o aviso.
+
 ## M1 — Domínio DriveNow (stand de carros)
 
 1. **Domínio:** O projeto representa o DriveNow, um stand de automóveis onde os clientes podem encomendar e pagar viaturas, enquanto os gestores ficam responsáveis pela gestão de marcas, viaturas e encomendas. Foi rejeitada a manutenção da loja genérica das fichas, optando-se por um domínio próprio com as mesmas seis entidades.
