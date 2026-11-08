@@ -211,3 +211,19 @@ GET /deliveries/	                                  401	    200, só as das suas 
 GET /deliveries/{id}/ (de outro)	                  401	    404	                                200	filtro → 404
 POST/PATCH /deliveries/	                              401	    403	                                201/200; 400 se a encomenda não estiver paga ou já tiver entrega	    IsGestorOrReadOnly + validate_order
 POST /deliveries/{id}/ship/, /complete/	              401	    403	                                200; 409 se repetido	                                IsGestorOrReadOnly + serviços
+
+
+2. Review — avaliação da viatura (Filipe)
+
+23. **Só avalia quem comprou:** o `ReviewSerializer.validate` procura uma linha dessa viatura numa encomenda paga ou entregue do cliente; sem compra, 400. Rejeitado: deixar qualquer cliente avaliar, que abria a porta a avaliações falsas.
+24. **Uma avaliação por cliente e viatura:** `uq_review_car_customer` na base de dados e a mesma verificação no serializer, para responder 400 em vez de rebentar com um `IntegrityError`. A nota vai de 1 a 5 (`ck_review_rating_1_5`).
+25. **Moderação:** as avaliações nascem pendentes e só o gestor as aprova ou oculta (`POST /reviews/{id}/moderate/`, `IsGestor`); uma avaliação editada volta a pendente. O público vê só as aprovadas; o cliente vê também as suas.
+26. **Leitura pública, escrita do autor:** `IsAuthenticatedOrReadOnly` + `IsReviewAuthorOrGestor`. Numa avaliação aprovada de outro, o cliente leva 403 (ela é pública); numa pendente de outro, 404 (nem a vê).
+
+| Endpoint | anónimo | cliente | gestor | Mecanismo |
+|---|---|---|---|---|
+| `GET /reviews/` | 200, só as aprovadas | 200, as aprovadas e as suas | 200, todas | filtro no `get_queryset` |
+| `POST /reviews/` | 401 | 201 se comprou; 400 se não comprou ou se repetir | 201 se comprou | `validate` |
+| `PATCH/DELETE /reviews/{id}/` (sua) | 401 | 200 (volta a pendente) / 204 | 200/204 | `IsReviewAuthorOrGestor` |
+| `PATCH/DELETE /reviews/{id}/` (aprovada, de outro) | 401 | 403 | 200/204 | `IsReviewAuthorOrGestor` |
+| `POST /reviews/{id}/moderate/` | 401 | 403 | 200 | `IsGestor` |
