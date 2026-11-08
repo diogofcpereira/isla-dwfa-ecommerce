@@ -1,13 +1,17 @@
 import random
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import F
+from django.utils import timezone
 from django.utils.text import slugify
 
 from accounts.factories import UserFactory
+from deliveries.models import Delivery
+from deliveries.services import complete_delivery, ship_delivery
 from shop.factories import BrandFactory, CarFactory, CustomerFactory
 from shop.models import Brand, Car, Customer, Order, Payment
 from shop.permissions import GESTORES
@@ -115,10 +119,27 @@ class Command(BaseCommand):
         order = create_order(customer, lines)
         if status in (Order.Status.PAID, Order.Status.DELIVERED):
             pay_order(order, random.choice(Payment.Method.values))
+        if status == Order.Status.PAID and random.random() < 0.5:
+            # Metade das pagas já tem a entrega marcada; algumas já saíram do stand.
+            delivery = self.delivery(order, days=random.randint(1, 14))
+            if random.random() < 0.5:
+                ship_delivery(delivery)
         if status == Order.Status.DELIVERED:
-            Order.objects.filter(pk=order.pk).update(status=Order.Status.DELIVERED)
+            # Como na API: é o complete_delivery que passa a encomenda a "entregue".
+            complete_delivery(self.delivery(order, days=-random.randint(1, 10)))
         if status == Order.Status.CANCELLED:
             for item in order.items.all():  # devolve as unidades ao stock
                 Car.objects.filter(pk=item.car_id).update(stock=F("stock") + item.quantity)
             Order.objects.filter(pk=order.pk).update(status=Order.Status.CANCELLED)
         return order
+
+    def delivery(self, order, days):
+        """Agenda a entrega a `days` dias de hoje (negativo: no passado)."""
+        delivery, _ = Delivery.objects.get_or_create(
+            order=order,
+            defaults={
+                "scheduled_for": timezone.now() + timedelta(days=days),
+                "address": order.customer.address or "Rua da Demonstração, 1, Porto",
+            },
+        )
+        return delivery
