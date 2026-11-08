@@ -572,6 +572,138 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/customers/:
+    get:
+      operationId: v1_customers_list
+      description: |-
+        Perfis de cliente. Não há POST nem DELETE: o perfil nasce com a primeira
+        encomenda (OrderViewSet.perform_create) e não se apaga quem já encomendou.
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCustomerList'
+          description: ''
+  /api/v1/customers/{id}/:
+    get:
+      operationId: v1_customers_retrieve
+      description: |-
+        Perfis de cliente. Não há POST nem DELETE: o perfil nasce com a primeira
+        encomenda (OrderViewSet.perform_create) e não se apaga quem já encomendou.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+    put:
+      operationId: v1_customers_update
+      description: |-
+        Perfis de cliente. Não há POST nem DELETE: o perfil nasce com a primeira
+        encomenda (OrderViewSet.perform_create) e não se apaga quem já encomendou.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Customer'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+    patch:
+      operationId: v1_customers_partial_update
+      description: |-
+        Perfis de cliente. Não há POST nem DELETE: o perfil nasce com a primeira
+        encomenda (OrderViewSet.perform_create) e não se apaga quem já encomendou.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
   /api/v1/me/:
     get:
       operationId: v1_me_retrieve
@@ -975,6 +1107,82 @@ paths:
           description: ''
         '409':
           description: A encomenda já não está pendente ou não tem linhas.
+  /api/v1/payments/:
+    get:
+      operationId: v1_payments_list
+      description: 'Pagamentos, só de leitura: um pagamento só se cria em POST /orders/{id}/pay/.'
+      parameters:
+      - in: query
+        name: method
+        schema:
+          type: string
+          enum:
+          - card
+          - financing
+          - mbway
+          - transfer
+        description: |-
+          * `transfer` - Transferência
+          * `financing` - Financiamento
+          * `card` - Cartão
+          * `mbway` - MB WAY
+      - in: query
+        name: order
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPaymentList'
+          description: ''
+  /api/v1/payments/{id}/:
+    get:
+      operationId: v1_payments_retrieve
+      description: 'Pagamentos, só de leitura: um pagamento só se cria em POST /orders/{id}/pay/.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this payment.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
 components:
   schemas:
     Brand:
@@ -1048,6 +1256,32 @@ components:
       - model
       - price
       - year
+    Customer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        phone:
+          type: string
+          maxLength: 20
+        address:
+          type: string
+      required:
+      - email
+      - id
+      - user
+      - username
     FuelEnum:
       enum:
       - petrol
@@ -1222,6 +1456,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Car'
+    PaginatedCustomerList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Customer'
     PaginatedOrderItemList:
       type: object
       required:
@@ -1268,6 +1525,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Order'
+    PaginatedPaymentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Payment'
     PatchedBrand:
       type: object
       properties:
@@ -1324,6 +1604,27 @@ components:
           type: string
           format: date-time
           readOnly: true
+    PatchedCustomer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        phone:
+          type: string
+          maxLength: 20
+        address:
+          type: string
     PatchedOrder:
       type: object
       properties:
@@ -1380,6 +1681,38 @@ components:
           $ref: '#/components/schemas/MethodEnum'
       required:
       - method
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        order:
+          type: integer
+          readOnly: true
+        method:
+          allOf:
+          - $ref: '#/components/schemas/MethodEnum'
+          readOnly: true
+        method_display:
+          type: string
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        paid_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - id
+      - method
+      - method_display
+      - order
+      - paid_at
     StatusEnum:
       enum:
       - pending

@@ -3,7 +3,7 @@ import datetime
 
 from rest_framework import serializers
 
-from .models import Brand, Car, Order, OrderItem, Payment
+from .models import Brand, Car, Customer, Order, OrderItem, Payment
 from .permissions import is_gestor
 
 
@@ -42,11 +42,32 @@ class CarSerializer(serializers.ModelSerializer):
         return value
 
     def validate_year(self, value):
-        # Aceita o modelo do ano seguinte (é comum no mercado automóvel).
+        # Aceita o modelo do ano seguinte
         latest = datetime.date.today().year + 1
         if not 1990 <= value <= latest:
             raise serializers.ValidationError(f"O ano tem de estar entre 1990 e {latest}.")
         return value
+
+
+class CustomerSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
+
+    class Meta:
+        model = Customer
+        fields = ["id", "user", "username", "email", "phone", "address"]
+        # O perfil pertence sempre ao utilizador que o tem; não se passa a outro.
+        read_only_fields = ["user"]
+
+
+class PaymentSerializer(serializers.ModelSerializer):
+    method_display = serializers.CharField(source="get_method_display", read_only=True)
+
+    class Meta:
+        model = Payment
+        # gateway_response fica de fora: é para diagnóstico interno, não para a API.
+        fields = ["id", "order", "method", "method_display", "amount", "paid_at"]
+        read_only_fields = fields  # um pagamento só nasce em POST /orders/{id}/pay/
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -80,9 +101,15 @@ class OrderItemSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        car = attrs.get("car") or getattr(self.instance, "car", None)
-        quantity = attrs.get("quantity", getattr(self.instance, "quantity", 0))
-        if car and quantity > car.stock:
+        if self.instance is not None:
+            # Numa linha que já existe só muda a quantidade (o stock é acertado no
+            # services.change_quantity). Trocar de viatura ou de encomenda = apagar e criar.
+            for field in ("order", "car"):
+                if field in attrs and attrs[field] != getattr(self.instance, field):
+                    raise serializers.ValidationError({field: "Não pode ser alterado."})
+            return attrs
+        car = attrs["car"]
+        if attrs["quantity"] > car.stock:
             raise serializers.ValidationError({"quantity": f"Só há {car.stock} em stock."})
         return attrs
 

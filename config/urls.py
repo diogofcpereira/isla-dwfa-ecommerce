@@ -11,8 +11,10 @@ from shop import views
 router = DefaultRouter()
 router.register("brands", views.BrandViewSet)
 router.register("cars", views.CarViewSet)
+router.register("customers", views.CustomerViewSet)
 router.register("orders", views.OrderViewSet, basename="order")
 router.register("order-items", views.OrderItemViewSet)
+router.register("payments", views.PaymentViewSet)
 
 urlpatterns = [
     path("admin/", admin.site.urls),

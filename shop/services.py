@@ -1,3 +1,9 @@
+"""Regras de negócio do DriveNow.
+
+As views só recebem o pedido e devolvem a resposta; o que mexe em stock,
+estados e pagamentos vive aqui, dentro de transações.
+"""
+
 from django.db import transaction
 from django.db.models import Count, F, Sum
 from rest_framework.exceptions import APIException
@@ -32,8 +38,18 @@ def order_total(order):
     return order.items.aggregate(total=Sum(line))["total"] or 0
 
 
+def ensure_pending(order):
+    """Só uma encomenda pendente pode mudar de linhas ou ser apagada."""
+    if order.status != Order.Status.PENDING:
+        raise Conflict(
+            f"A encomenda está '{order.get_status_display()}': as linhas já não podem mudar."
+        )
+
+
 @transaction.atomic
 def add_item(order, car, quantity):
+    order = Order.objects.select_for_update().get(pk=order.pk)
+    ensure_pending(order)
     # Bloqueia a linha da viatura até ao fim da transação: dois clientes não
     # conseguem comprar a última unidade ao mesmo tempo.
     car = Car.objects.select_for_update().get(pk=car.pk)
@@ -43,6 +59,44 @@ def add_item(order, car, quantity):
     car.stock -= quantity
     car.save(update_fields=["stock"])
     return item
+
+
+@transaction.atomic
+def change_quantity(item, quantity):
+    """Muda a quantidade de uma linha e acerta o stock pela diferença."""
+    item = OrderItem.objects.select_for_update().select_related("order").get(pk=item.pk)
+    ensure_pending(item.order)
+    car = Car.objects.select_for_update().get(pk=item.car_id)
+    delta = quantity - item.quantity  # > 0: tira do stock; < 0: devolve
+    if delta > car.stock:
+        raise OutOfStock(f"Só há mais {car.stock} em stock de {car.name}.")
+    car.stock -= delta
+    car.save(update_fields=["stock"])
+    item.quantity = quantity
+    item.save(update_fields=["quantity"])
+    return item
+
+
+@transaction.atomic
+def remove_item(item):
+    """Apaga uma linha e devolve as unidades ao stock."""
+    item = OrderItem.objects.select_for_update().select_related("order").get(pk=item.pk)
+    ensure_pending(item.order)
+    Car.objects.filter(pk=item.car_id).update(stock=F("stock") + item.quantity)
+    item.delete()
+
+
+@transaction.atomic
+def delete_order(order):
+    """Apaga uma encomenda pendente e devolve ao stock as unidades de todas as linhas.
+
+    Uma encomenda paga ou entregue não se apaga (tem um Payment, que a protege).
+    """
+    order = Order.objects.select_for_update().get(pk=order.pk)
+    ensure_pending(order)
+    for item in order.items.all():
+        Car.objects.filter(pk=item.car_id).update(stock=F("stock") + item.quantity)
+    order.delete()
 
 
 @transaction.atomic
