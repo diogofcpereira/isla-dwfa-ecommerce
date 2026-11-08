@@ -12,8 +12,9 @@ from django.utils.text import slugify
 from accounts.factories import UserFactory
 from deliveries.models import Delivery
 from deliveries.services import complete_delivery, ship_delivery
+from reviews.models import Review
 from shop.factories import BrandFactory, CarFactory, CustomerFactory
-from shop.models import Brand, Car, Customer, Order, Payment
+from shop.models import Brand, Car, Customer, Order, OrderItem, Payment
 from shop.permissions import GESTORES
 from shop.services import create_order, pay_order
 
@@ -67,6 +68,7 @@ class Command(BaseCommand):
         missing = opts["orders"] - Order.objects.count()
         for _ in range(max(missing, 0)):
             self.order(random.choice(customers), random.choice(STATES))
+        self.reviews()
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -143,3 +145,24 @@ class Command(BaseCommand):
             },
         )
         return delivery
+
+
+    def reviews(self):
+        """Avaliações de demonstração: só de viaturas compradas (encomenda paga ou entregue)."""
+        bought = (
+            OrderItem.objects.filter(order__status__in=[Order.Status.PAID, Order.Status.DELIVERED])
+            .select_related("order__customer", "car")
+            .order_by("id")
+        )
+        statuses = [Review.Status.APPROVED, Review.Status.PENDING, Review.Status.HIDDEN]
+        for i, item in enumerate(bought[:9]):
+            # get_or_create pela chave única (car, customer): correr o seed outra vez não duplica.
+            Review.objects.get_or_create(
+                car=item.car,
+                customer=item.order.customer,
+                defaults={
+                    "rating": 3 + i % 3,
+                    "comment": "Avaliação de demonstração.",
+                    "status": statuses[i % 3],
+                },
+            )
