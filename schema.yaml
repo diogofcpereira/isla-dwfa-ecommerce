@@ -734,6 +734,245 @@ paths:
               schema:
                 $ref: '#/components/schemas/Customer'
           description: ''
+  /api/v1/deliveries/:
+    get:
+      operationId: v1_deliveries_list
+      description: |-
+        Entregas. O gestor agenda, altera e conclui; o cliente acompanha as suas.
+
+        Não há DELETE: uma entrega fica no histórico da encomenda.
+      parameters:
+      - in: query
+        name: order
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - delivered
+          - in_transit
+          - scheduled
+        description: |-
+          * `scheduled` - Agendada
+          * `in_transit` - Em trânsito
+          * `delivered` - Entregue
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDeliveryList'
+          description: ''
+    post:
+      operationId: v1_deliveries_create
+      description: |-
+        Entregas. O gestor agenda, altera e conclui; o cliente acompanha as suas.
+
+        Não há DELETE: uma entrega fica no histórico da encomenda.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Delivery'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Delivery'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Delivery'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Delivery'
+          description: ''
+  /api/v1/deliveries/{id}/:
+    get:
+      operationId: v1_deliveries_retrieve
+      description: |-
+        Entregas. O gestor agenda, altera e conclui; o cliente acompanha as suas.
+
+        Não há DELETE: uma entrega fica no histórico da encomenda.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this delivery.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Delivery'
+          description: ''
+    put:
+      operationId: v1_deliveries_update
+      description: |-
+        Entregas. O gestor agenda, altera e conclui; o cliente acompanha as suas.
+
+        Não há DELETE: uma entrega fica no histórico da encomenda.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this delivery.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Delivery'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Delivery'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Delivery'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Delivery'
+          description: ''
+    patch:
+      operationId: v1_deliveries_partial_update
+      description: |-
+        Entregas. O gestor agenda, altera e conclui; o cliente acompanha as suas.
+
+        Não há DELETE: uma entrega fica no histórico da encomenda.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this delivery.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDelivery'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDelivery'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDelivery'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Delivery'
+          description: ''
+  /api/v1/deliveries/{id}/complete/:
+    post:
+      operationId: v1_deliveries_complete_create
+      description: |-
+        Entregas. O gestor agenda, altera e conclui; o cliente acompanha as suas.
+
+        Não há DELETE: uma entrega fica no histórico da encomenda.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this delivery.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Delivery'
+          description: ''
+        '409':
+          description: O estado da entrega ou da encomenda não o permite.
+  /api/v1/deliveries/{id}/ship/:
+    post:
+      operationId: v1_deliveries_ship_create
+      description: |-
+        Entregas. O gestor agenda, altera e conclui; o cliente acompanha as suas.
+
+        Não há DELETE: uma entrega fica no histórico da encomenda.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this delivery.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Delivery'
+          description: ''
+        '409':
+          description: O estado da entrega ou da encomenda não o permite.
   /api/v1/me/:
     get:
       operationId: v1_me_retrieve
@@ -1213,6 +1452,476 @@ paths:
               schema:
                 $ref: '#/components/schemas/Payment'
           description: ''
+  /api/v1/reviews/:
+    get:
+      operationId: v1_reviews_list
+      description: |-
+        Avaliações de viaturas.
+
+        - anónimos: veem as aprovadas;
+        - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+        - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+      parameters:
+      - in: query
+        name: car
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: rating
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - approved
+          - hidden
+          - pending
+        description: |-
+          * `pending` - Pendente
+          * `approved` - Aprovada
+          * `hidden` - Oculta
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedReviewList'
+          description: ''
+    post:
+      operationId: v1_reviews_create
+      description: |-
+        Avaliações de viaturas.
+
+        - anónimos: veem as aprovadas;
+        - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+        - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Review'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Review'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Review'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+  /api/v1/reviews/{id}/:
+    get:
+      operationId: v1_reviews_retrieve
+      description: |-
+        Avaliações de viaturas.
+
+        - anónimos: veem as aprovadas;
+        - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+        - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this review.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+    put:
+      operationId: v1_reviews_update
+      description: |-
+        Avaliações de viaturas.
+
+        - anónimos: veem as aprovadas;
+        - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+        - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this review.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Review'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Review'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Review'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+    patch:
+      operationId: v1_reviews_partial_update
+      description: |-
+        Avaliações de viaturas.
+
+        - anónimos: veem as aprovadas;
+        - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+        - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this review.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedReview'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedReview'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedReview'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+    delete:
+      operationId: v1_reviews_destroy
+      description: |-
+        Avaliações de viaturas.
+
+        - anónimos: veem as aprovadas;
+        - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+        - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this review.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/reviews/{id}/moderate/:
+    post:
+      operationId: v1_reviews_moderate_create
+      description: |-
+        Avaliações de viaturas.
+
+        - anónimos: veem as aprovadas;
+        - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+        - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this review.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Moderation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Moderation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Moderation'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+  /api/v1/test-drives/:
+    get:
+      operationId: v1_test_drives_list
+      description: |-
+        Marcações de test drive.
+
+        - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+        - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+        Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+      parameters:
+      - in: query
+        name: car
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - cancelled
+          - confirmed
+          - declined
+          - requested
+        description: |-
+          * `requested` - Pedido
+          * `confirmed` - Confirmado
+          * `declined` - Recusado
+          * `cancelled` - Cancelado
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTestDriveList'
+          description: ''
+    post:
+      operationId: v1_test_drives_create
+      description: |-
+        Marcações de test drive.
+
+        - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+        - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+        Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestDrive'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TestDrive'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TestDrive'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDrive'
+          description: ''
+  /api/v1/test-drives/{id}/:
+    get:
+      operationId: v1_test_drives_retrieve
+      description: |-
+        Marcações de test drive.
+
+        - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+        - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+        Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this test drive.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDrive'
+          description: ''
+  /api/v1/test-drives/{id}/cancel/:
+    post:
+      operationId: v1_test_drives_cancel_create
+      description: |-
+        Marcações de test drive.
+
+        - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+        - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+        Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this test drive.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDrive'
+          description: ''
+        '409':
+          description: O estado atual do test drive não o permite.
+  /api/v1/test-drives/{id}/confirm/:
+    post:
+      operationId: v1_test_drives_confirm_create
+      description: |-
+        Marcações de test drive.
+
+        - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+        - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+        Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this test drive.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDrive'
+          description: ''
+        '409':
+          description: O estado atual do test drive não o permite.
+  /api/v1/test-drives/{id}/decline/:
+    post:
+      operationId: v1_test_drives_decline_create
+      description: |-
+        Marcações de test drive.
+
+        - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+        - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+        Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this test drive.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestDrive'
+          description: ''
+        '409':
+          description: O estado atual do test drive não o permite.
 components:
   schemas:
     Brand:
@@ -1312,6 +2021,61 @@ components:
       - id
       - user
       - username
+    Delivery:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        order:
+          type: integer
+        customer:
+          type: integer
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/DeliveryStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        scheduled_for:
+          type: string
+          format: date-time
+        address:
+          type: string
+          maxLength: 255
+        notes:
+          type: string
+        delivered_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - address
+      - created_at
+      - customer
+      - delivered_at
+      - id
+      - order
+      - scheduled_for
+      - status
+      - status_display
+    DeliveryStatusEnum:
+      enum:
+      - scheduled
+      - in_transit
+      - delivered
+      type: string
+      description: |-
+        * `scheduled` - Agendada
+        * `in_transit` - Em trânsito
+        * `delivered` - Entregue
     FuelEnum:
       enum:
       - petrol
@@ -1351,6 +2115,22 @@ components:
         * `financing` - Financiamento
         * `card` - Cartão
         * `mbway` - MB WAY
+    Moderation:
+      type: object
+      description: Corpo de POST /reviews/{id}/moderate/.
+      properties:
+        status:
+          $ref: '#/components/schemas/ModerationStatusEnum'
+      required:
+      - status
+    ModerationStatusEnum:
+      enum:
+      - approved
+      - hidden
+      type: string
+      description: |-
+        * `approved` - approved
+        * `hidden` - hidden
     Order:
       type: object
       properties:
@@ -1362,7 +2142,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/OrderStatusEnum'
           readOnly: true
         created_at:
           type: string
@@ -1440,6 +2220,18 @@ components:
       - id
       - quantity
       - unit_price
+    OrderStatusEnum:
+      enum:
+      - pending
+      - paid
+      - delivered
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Pendente
+        * `paid` - Paga
+        * `delivered` - Entregue
+        * `cancelled` - Cancelada
     PaginatedBrandList:
       type: object
       required:
@@ -1509,6 +2301,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Customer'
+    PaginatedDeliveryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Delivery'
     PaginatedOrderItemList:
       type: object
       required:
@@ -1578,6 +2393,52 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Payment'
+    PaginatedReviewList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Review'
+    PaginatedTestDriveList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestDrive'
     PatchedBrand:
       type: object
       properties:
@@ -1655,6 +2516,41 @@ components:
           maxLength: 20
         address:
           type: string
+    PatchedDelivery:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        order:
+          type: integer
+        customer:
+          type: integer
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/DeliveryStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        scheduled_for:
+          type: string
+          format: date-time
+        address:
+          type: string
+          maxLength: 255
+        notes:
+          type: string
+        delivered_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
     PatchedOrder:
       type: object
       properties:
@@ -1666,7 +2562,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/OrderStatusEnum'
           readOnly: true
         created_at:
           type: string
@@ -1702,6 +2598,40 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+    PatchedReview:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        car:
+          type: integer
+        car_name:
+          type: string
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+        author:
+          type: string
+          readOnly: true
+        rating:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        comment:
+          type: string
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ReviewStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
           readOnly: true
     Pay:
       type: object
@@ -1743,18 +2673,112 @@ components:
       - method_display
       - order
       - paid_at
-    StatusEnum:
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        car:
+          type: integer
+        car_name:
+          type: string
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+        author:
+          type: string
+          readOnly: true
+        rating:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        comment:
+          type: string
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ReviewStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - author
+      - car
+      - car_name
+      - created_at
+      - customer
+      - id
+      - rating
+      - status
+      - status_display
+    ReviewStatusEnum:
       enum:
       - pending
-      - paid
-      - delivered
-      - cancelled
+      - approved
+      - hidden
       type: string
       description: |-
         * `pending` - Pendente
-        * `paid` - Paga
-        * `delivered` - Entregue
-        * `cancelled` - Cancelada
+        * `approved` - Aprovada
+        * `hidden` - Oculta
+    TestDrive:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        car:
+          type: integer
+        car_name:
+          type: string
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+        scheduled_for:
+          type: string
+          format: date-time
+        status:
+          allOf:
+          - $ref: '#/components/schemas/TestDriveStatusEnum'
+          readOnly: true
+          default: requested
+        status_display:
+          type: string
+          readOnly: true
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - car
+      - car_name
+      - created_at
+      - customer
+      - id
+      - scheduled_for
+      - status
+      - status_display
+    TestDriveStatusEnum:
+      enum:
+      - requested
+      - confirmed
+      - declined
+      - cancelled
+      type: string
+      description: |-
+        * `requested` - Pedido
+        * `confirmed` - Confirmado
+        * `declined` - Recusado
+        * `cancelled` - Cancelado
     TokenBlacklist:
       type: object
       properties:

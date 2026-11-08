@@ -6,7 +6,10 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts.views import LogoutView, MeView, ThrottledTokenView
 from core.views import health
+from deliveries.views import DeliveryViewSet
+from reviews.views import ReviewViewSet
 from shop import views
+from testdrives.views import TestDriveViewSet
 
 router = DefaultRouter()
 router.register("brands", views.BrandViewSet)
@@ -15,6 +18,9 @@ router.register("customers", views.CustomerViewSet)
 router.register("orders", views.OrderViewSet, basename="order")
 router.register("order-items", views.OrderItemViewSet)
 router.register("payments", views.PaymentViewSet)
+router.register("deliveries", DeliveryViewSet)  # M1 · recurso do Diogo
+router.register("reviews", ReviewViewSet)  # M1 · recurso do Filipe
+router.register("test-drives", TestDriveViewSet)  # M1 · recurso do Rúben
 
 urlpatterns = [
     path("admin/", admin.site.urls),

@@ -131,6 +131,47 @@ outro, mas responde 403, o que confirma que ela existe, e deixa a lista aberta. 
 as duas camadas: o filtro (404 e lista fechada) e a permissão por objeto (defesa extra). O
 filtro foi reposto.
 
+## Fichas 02–03 — Filipe
+
+Decisões do fork individual que diferem das do Diogo:
+
+- **JSONB em `Product.attributes`:** guardei os atributos que variam por categoria (cor, tamanho, voltagem) num JSONB, porque não têm um esquema fixo e não eram filtrados; rejeitei uma tabela EAV ou colunas por categoria, mais caras para nenhum ganho, e adiei um `GinIndex` até haver uma query que o justifique.
+- **Índice composto `(customer, created_at)` em `Order`:** indexei a query mais frequente da loja, "as minhas encomendas, mais recentes primeiro"; rejeitei um índice só em `customer`, que obrigava a ordenar as encomendas à parte.
+- **Erros no formato RFC 9457 desde a Ficha 02:** um `EXCEPTION_HANDLER` dá a todos os erros DRF o mesmo envelope (`type`, `title`, `status`, `errors`), para o cliente tratar 400, 404, 409 e 429 da mesma forma; rejeitei o formato por omissão do DRF, que muda de forma conforme o erro (no M1, a parte 5 adotou este formato para o grupo).
+- **`cancel` além do `pay`, ambos em `services.py` com `select_for_update`:** as duas transições de estado bloqueiam a linha numa transação, para que dois pedidos concorrentes não mudem a mesma encomenda duas vezes; rejeitei mudar o estado na vista ou por `PATCH {"status": ...}`, sem bloqueio.
+- **Tokens da SPA só em memória, incluindo o refresh:** o `localStorage` é legível por qualquer script da página e fica exposto a XSS, por isso aceitei o custo de um novo login ao recarregar; rejeitei o refresh no `localStorage` e deixei como evolução um cookie HttpOnly, Secure e SameSite, com proteção CSRF.
+- **Filtro por dono também em `Customer`, `OrderItem` e `Payment`:** apliquei o padrão das encomendas (gestor vê tudo, cliente só os seus, 404 nos alheios), porque estes endpoints expunham dados de outros clientes; rejeitei protegê-los só com a permissão por objeto, que deixa a lista aberta e responde 403.
+- **Linha numa encomenda alheia → 404:** um cliente que tenta acrescentar uma linha à encomenda de outro recebe 404, como em qualquer objeto alheio, para não confirmar que a encomenda existe; rejeitei um erro de validação 400.
+- **`POST /orders/` de um gestor sem perfil de cliente → 400:** uma encomenda pertence sempre a um cliente, e um gestor não é cliente; rejeitei criar automaticamente um perfil de cliente para o gestor.
+- **`MeSerializer` para documentar `/me/`:** a resposta passa a ter um esquema no Swagger, o que elimina o aviso `drf_spectacular.W002` do `check --deploy`; rejeitei deixar a resposta sem esquema e silenciar o aviso.
+
+## Fichas 02–03 — Rúben
+
+Decisões do meu fork individual (escritas na altura com os nomes da loja: `Product`, `Category`).
+
+### Ficha 02 — Modelos e API
+
+- **`Product.category` com `PROTECT`:** impede apagar uma categoria que ainda tem produtos, para não perder o catálogo por engano. Rejeitei `CASCADE` porque apagava os produtos todos de uma vez.
+- **`UniqueConstraint` no `sku` e `CheckConstraint` no `price`:** a base de dados garante SKUs únicos e preços não negativos, mesmo quando a escrita não passa por um formulário ou por um serializer.
+- **Sem JSONB:** os dados da loja (produtos, categorias, encomendas, pagamentos) têm estrutura fixa e relações claras, por isso usei colunas tipadas e chaves estrangeiras. Rejeitei JSONB porque perdia as constraints e a validação da base de dados.
+- **Campos só de leitura:** IDs, datas, estado da encomenda, total e preço unitário são definidos pelo servidor, para o cliente não poder alterar dados derivados.
+- **Paginação com `PageNumberPagination` (20 por página):** evita devolver todos os registos numa só resposta. Para listas muito grandes eu escolheria `CursorPagination`, que não conta todos os registos mas precisa de uma ordenação estável (por exemplo `created_at` e `id`).
+- **Versionamento com o prefixo `/api/v1/`:** fica claro nos URLs e permite lançar uma `v2` com alterações incompatíveis sem partir quem usa a `v1`.
+- **N+1 na listagem de encomendas:** uso `select_related`, `prefetch_related` e `annotate`, e o teste limita a listagem a 3 queries.
+- **Validação em duas camadas:** o serializer dá erros claros antes de escrever, e as constraints da base de dados mantêm a integridade por qualquer caminho (ORM, scripts, admin).
+- **Stock concorrente:** uma `CheckConstraint` não compara o stock de outra tabela, por isso o produto deve ser bloqueado com `select_for_update()` numa transação e o stock revalidado antes de o atualizar.
+
+### Ficha 03 — Autenticação e autorização
+
+- **JWT com access de 30 minutos e refresh de 1 dia, rotativo, com o token antigo na blacklist:** um token roubado dura pouco, e um refresh já usado deixa de servir.
+- **Tokens na SPA:** o access fica em memória e o refresh no `localStorage`. Evito guardar o access em armazenamento persistente, mas a proteção contra XSS continua a ser necessária.
+- **Papéis pelo grupo `gestores`, criado por migração de dados:** o grupo existe em qualquer base de dados nova, sem passos manuais. Rejeitei um campo `is_manager` no utilizador para não duplicar o que os grupos do Django já fazem.
+- **Catálogo público para leitura:** só a escrita é reservada aos gestores.
+- **Cliente da encomenda definido pelo servidor:** o cliente não escolhe a quem pertence a encomenda, e só vê e paga as suas.
+- **`404` para uma encomenda alheia:** o `get_queryset` filtra por utilizador. Com `403` a resposta confirmaria que a encomenda existe, e assim evita-se a enumeração de IDs.
+- **`401` vs `403`:** `401` quando não há autenticação válida, `403` quando há autenticação mas falta autorização.
+- **CORS não é segurança:** é aplicado pelo browser e não bloqueia `curl` nem scripts. A proteção real vem da autenticação, das permissões por papel e por objeto, do queryset filtrado e da validação dos dados.
+
 ## M1 — Domínio DriveNow (stand de carros)
 
 1. **Domínio:** O projeto representa o DriveNow, um stand de automóveis onde os clientes podem encomendar e pagar viaturas, enquanto os gestores ficam responsáveis pela gestão de marcas, viaturas e encomendas. Foi rejeitada a manutenção da loja genérica das fichas, optando-se por um domínio próprio com as mesmas seis entidades.
@@ -197,4 +238,48 @@ Cada linha está testada em `shop/tests/test_auth.py` (por papel) ou nos testes 
 
 ## M1 — Recursos individuais
 
-Cada membro acrescenta aqui as decisões do seu recurso (uma linha cada) e, na tabela acima, as linhas do seu recurso.
+Um recurso por membro, cada um na sua app Django (`deliveries`, `reviews`, `testdrives`), para cada app ter as suas migrações e não haver conflitos no `shop`. Cada subsecção tem as decisões do recurso e as suas linhas da matriz endpoint × papel, testadas em `<app>/tests/`.
+
+### Delivery — entrega da viatura (Diogo)
+
+19. **Só encomendas pagas, uma entrega por encomenda:** `Delivery.order` é um `OneToOneField` com `PROTECT`, e o `validate_order` recusa encomendas que não estejam pagas (400). Rejeitado: uma FK com várias entregas por encomenda, que complicava saber quando a encomenda fica entregue.
+20. **O estado só muda por ações:** `POST /deliveries/{id}/ship/` (agendada → em trânsito) e `/complete/` (→ entregue) são serviços com `select_for_update`, e repetir dá 409. O `complete` passa a encomenda a `delivered` na mesma transação. Rejeitado: `PATCH {"status": ...}`, que deixava saltar estados e esquecer a encomenda.
+21. **`ck_delivery_delivered_at_matches_status`:** a base de dados garante que só uma entrega concluída tem `delivered_at`, e que todas as concluídas o têm.
+22. **Leitura para o cliente, escrita para o gestor:** `IsAuthenticated` + `IsGestorOrReadOnly` + `IsDeliveryOwnerOrGestor`, com o filtro no `get_queryset` (404 nas entregas de outros). Não há DELETE: a entrega fica no histórico da encomenda.
+
+| Endpoint | anónimo | cliente | gestor | Mecanismo |
+|---|---|---|---|---|
+| `GET /deliveries/` | 401 | 200, só as das suas encomendas | 200, todas | filtro no `get_queryset` |
+| `GET /deliveries/{id}/` (de outro) | 401 | 404 | 200 | filtro → 404 |
+| `POST/PATCH /deliveries/` | 401 | 403 | 201/200; 400 se a encomenda não estiver paga ou já tiver entrega | `IsGestorOrReadOnly` + `validate_order` |
+| `POST /deliveries/{id}/ship/`, `/complete/` | 401 | 403 | 200; 409 se repetido | `IsGestorOrReadOnly` + serviços |
+
+### Review — avaliação da viatura (Filipe)
+
+23. **Só avalia quem comprou:** o `ReviewSerializer.validate` procura uma linha dessa viatura numa encomenda paga ou entregue do cliente; sem compra, 400. Rejeitado: deixar qualquer cliente avaliar, que abria a porta a avaliações falsas.
+24. **Uma avaliação por cliente e viatura:** `uq_review_car_customer` na base de dados e a mesma verificação no serializer, para responder 400 em vez de rebentar com um `IntegrityError`. A nota vai de 1 a 5 (`ck_review_rating_1_5`).
+25. **Moderação:** as avaliações nascem pendentes e só o gestor as aprova ou oculta (`POST /reviews/{id}/moderate/`, `IsGestor`); uma avaliação editada volta a pendente. O público vê só as aprovadas; o cliente vê também as suas.
+26. **Leitura pública, escrita do autor:** `IsAuthenticatedOrReadOnly` + `IsReviewAuthorOrGestor`. Numa avaliação aprovada de outro, o cliente leva 403 (ela é pública); numa pendente de outro, 404 (nem a vê).
+
+| Endpoint | anónimo | cliente | gestor | Mecanismo |
+|---|---|---|---|---|
+| `GET /reviews/` | 200, só as aprovadas | 200, as aprovadas e as suas | 200, todas | filtro no `get_queryset` |
+| `POST /reviews/` | 401 | 201 se comprou; 400 se não comprou ou se repetir | 201 se comprou | `validate` |
+| `PATCH/DELETE /reviews/{id}/` (sua) | 401 | 200 (volta a pendente) / 204 | 200/204 | `IsReviewAuthorOrGestor` |
+| `PATCH/DELETE /reviews/{id}/` (aprovada, de outro) | 401 | 403 | 200/204 | `IsReviewAuthorOrGestor` |
+| `POST /reviews/{id}/moderate/` | 401 | 403 | 200 | `IsGestor` |
+
+### TestDrive — marcação de test drive (Rúben)
+
+27. **Horários de hora a hora, um por viatura:** o `validate_scheduled_for` exige uma data no futuro e à hora certa (hh:00), e a `uq_testdrive_car_slot_active` é uma `UniqueConstraint` condicional, só para pedidos e confirmados: cancelar ou recusar liberta o horário. Rejeitado: uma `UniqueConstraint` simples, que deixava o horário ocupado para sempre.
+28. **Dois clientes ao mesmo tempo:** o serializer dá 400 no caso normal; se dois pedidos passarem juntos, a constraint apanha o segundo e o `book_test_drive` responde 409 em vez de 500.
+29. **O estado só muda por ações:** confirmar e recusar (só o gestor, `IsGestor`) a partir de um pedido; cancelar (o dono ou o gestor) a partir de um pedido ou de um confirmado; o resto dá 409. Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+30. **Cada um vê os seus:** filtro no `get_queryset` + `IsTestDriveOwnerOrGestor`, por isso as marcações de outros dão 404.
+
+| Endpoint | anónimo | cliente | gestor | Mecanismo |
+|---|---|---|---|---|
+| `GET /test-drives/` | 401 | 200, só os seus | 200, todos | filtro no `get_queryset` |
+| `POST /test-drives/` | 401 | 201; 400 no passado, fora da hora certa, viatura retirada ou horário ocupado | 201 | `validate` + `uq_testdrive_car_slot_active` |
+| `POST /test-drives/{id}/confirm/`, `/decline/` | 401 | 403 | 200; 409 se já não estiver pedido | `IsGestor` + serviços |
+| `POST /test-drives/{id}/cancel/` | 401 | 200 (seu) / 404 (de outro); 409 se já não estiver ativo | 200 | filtro + `IsTestDriveOwnerOrGestor` |
+
