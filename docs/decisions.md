@@ -145,6 +145,33 @@ Decisões do fork individual que diferem das do Diogo:
 - **`POST /orders/` de um gestor sem perfil de cliente → 400:** uma encomenda pertence sempre a um cliente, e um gestor não é cliente; rejeitei criar automaticamente um perfil de cliente para o gestor.
 - **`MeSerializer` para documentar `/me/`:** a resposta passa a ter um esquema no Swagger, o que elimina o aviso `drf_spectacular.W002` do `check --deploy`; rejeitei deixar a resposta sem esquema e silenciar o aviso.
 
+## Fichas 02–03 — Rúben
+
+Decisões do meu fork individual (escritas na altura com os nomes da loja: `Product`, `Category`).
+
+### Ficha 02 — Modelos e API
+
+- **`Product.category` com `PROTECT`:** impede apagar uma categoria que ainda tem produtos, para não perder o catálogo por engano. Rejeitei `CASCADE` porque apagava os produtos todos de uma vez.
+- **`UniqueConstraint` no `sku` e `CheckConstraint` no `price`:** a base de dados garante SKUs únicos e preços não negativos, mesmo quando a escrita não passa por um formulário ou por um serializer.
+- **Sem JSONB:** os dados da loja (produtos, categorias, encomendas, pagamentos) têm estrutura fixa e relações claras, por isso usei colunas tipadas e chaves estrangeiras. Rejeitei JSONB porque perdia as constraints e a validação da base de dados.
+- **Campos só de leitura:** IDs, datas, estado da encomenda, total e preço unitário são definidos pelo servidor, para o cliente não poder alterar dados derivados.
+- **Paginação com `PageNumberPagination` (20 por página):** evita devolver todos os registos numa só resposta. Para listas muito grandes eu escolheria `CursorPagination`, que não conta todos os registos mas precisa de uma ordenação estável (por exemplo `created_at` e `id`).
+- **Versionamento com o prefixo `/api/v1/`:** fica claro nos URLs e permite lançar uma `v2` com alterações incompatíveis sem partir quem usa a `v1`.
+- **N+1 na listagem de encomendas:** uso `select_related`, `prefetch_related` e `annotate`, e o teste limita a listagem a 3 queries.
+- **Validação em duas camadas:** o serializer dá erros claros antes de escrever, e as constraints da base de dados mantêm a integridade por qualquer caminho (ORM, scripts, admin).
+- **Stock concorrente:** uma `CheckConstraint` não compara o stock de outra tabela, por isso o produto deve ser bloqueado com `select_for_update()` numa transação e o stock revalidado antes de o atualizar.
+
+### Ficha 03 — Autenticação e autorização
+
+- **JWT com access de 30 minutos e refresh de 1 dia, rotativo, com o token antigo na blacklist:** um token roubado dura pouco, e um refresh já usado deixa de servir.
+- **Tokens na SPA:** o access fica em memória e o refresh no `localStorage`. Evito guardar o access em armazenamento persistente, mas a proteção contra XSS continua a ser necessária.
+- **Papéis pelo grupo `gestores`, criado por migração de dados:** o grupo existe em qualquer base de dados nova, sem passos manuais. Rejeitei um campo `is_manager` no utilizador para não duplicar o que os grupos do Django já fazem.
+- **Catálogo público para leitura:** só a escrita é reservada aos gestores.
+- **Cliente da encomenda definido pelo servidor:** o cliente não escolhe a quem pertence a encomenda, e só vê e paga as suas.
+- **`404` para uma encomenda alheia:** o `get_queryset` filtra por utilizador. Com `403` a resposta confirmaria que a encomenda existe, e assim evita-se a enumeração de IDs.
+- **`401` vs `403`:** `401` quando não há autenticação válida, `403` quando há autenticação mas falta autorização.
+- **CORS não é segurança:** é aplicado pelo browser e não bloqueia `curl` nem scripts. A proteção real vem da autenticação, das permissões por papel e por objeto, do queryset filtrado e da validação dos dados.
+
 ## M1 — Domínio DriveNow (stand de carros)
 
 1. **Domínio:** O projeto representa o DriveNow, um stand de automóveis onde os clientes podem encomendar e pagar viaturas, enquanto os gestores ficam responsáveis pela gestão de marcas, viaturas e encomendas. Foi rejeitada a manutenção da loja genérica das fichas, optando-se por um domínio próprio com as mesmas seis entidades.
