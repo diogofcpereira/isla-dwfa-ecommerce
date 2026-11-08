@@ -148,3 +148,53 @@ filtro foi reposto.
 7. **Gestão de marcas:** O endpoint `/brands/` passou a utilizar `IsGestorOrReadOnly`, permitindo aos gestores adicionar marcas, enquanto a consulta continua pública.
 
 8. **Viaturas retiradas:** Uma viatura com `is_active=False` deixa de poder ser encomendada. Esta validação é feita em `OrderItemSerializer.validate_car`, devolvendo erro 400. A viatura mantém-se nas encomendas antigas graças ao `PROTECT`, preservando o histórico.
+
+## M1 — Núcleo (fluxo, API completa, erros, auth e dados)
+
+9. **Encomenda criada com as linhas no mesmo pedido:** `POST /orders/` recebe `items` e o `services.create_order` cria tudo numa transação; se uma linha falha (viatura retirada, sem stock), nada fica gravado e o stock volta ao que era (`test_create_order_rolls_back_when_stock_runs_out`). Uma encomenda sem linhas ou com a mesma viatura em duas linhas é recusada com 400. Rejeitado: criar a encomenda vazia e acrescentar linhas depois — deixava encomendas a meio se a segunda chamada falhasse.
+10. **Pagar cria o `Payment`:** `POST /orders/{id}/pay/ {"method": ...}` bloqueia a encomenda (`select_for_update`), confirma que está pendente e tem linhas, grava o pagamento com o total e passa a encomenda a paga; pagar de novo dá 409. Rejeitado: só mudar o estado — o pagamento ficava sem registo e o `/payments/` vazio.
+11. **Falta de stock é 409, não 500:** `OutOfStock` passou a ser um `Conflict`; o serializer dá 400 no caso normal e o serviço, com a viatura bloqueada, dá 409 no caso concorrente (dois clientes a comprar a última unidade).
+12. **O stock acompanha as encomendas:** mudar a quantidade de uma linha acerta o stock pela diferença, apagar uma linha ou uma encomenda pendente devolve as unidades. Numa linha que já existe só a quantidade muda (trocar de viatura = apagar e criar).
+13. **Encomenda paga não muda:** apagar, acrescentar ou alterar linhas de uma encomenda que já não está pendente dá 409. Sem isto, apagar uma encomenda paga rebentava com um 500 (o `Payment` protege-a com `PROTECT`).
+14. **Um viewset por entidade:** `/customers/` (listar, ver e editar o próprio perfil; sem POST nem DELETE, porque o perfil nasce com a primeira encomenda) e `/payments/` (só leitura; um pagamento só nasce no `pay`). O `gateway_response` não sai na API: é diagnóstico interno.
+15. **Erros com a forma da RFC 9457:** `core.exceptions.problem_details_handler` responde `application/problem+json` com `type`, `title`, `status`, `detail` e `instance`; os erros de validação vão em `errors`, campo a campo, e o `code` do simplejwt mantém-se. Rejeitado: o formato por omissão do DRF, que muda de forma conforme o erro.
+16. **Logout:** `POST /auth/logout/ {"refresh": ...}` põe o refresh na blacklist (`TokenBlacklistView`); o access ainda vale até expirar, por isso tem só 30 minutos. Não exige o access token: quem tem o refresh pode sempre desistir dele.
+17. **Dados de demonstração:** `manage.py seed` cria o catálogo de 20 viaturas (uma retirada de venda), o gestor `gestor`, os clientes `ana`, `bruno` e `carla` com uma encomenda em cada estado, e mais clientes e encomendas ao acaso. Usa os mesmos serviços da API, por isso o stock e os pagamentos ficam coerentes; pode correr várias vezes sem duplicar. A password de demonstração (`drivenow-demo-2026`) só existe em dev.
+18. **Sem N+1:** cada lista tem um teste em `shop/tests/test_queries.py` com 25 objetos: catálogo em ≤ 3 queries (count + lista), listas autenticadas em ≤ 3 ou 4 (mais a query do `is_gestor()` e, nas encomendas, a das linhas).
+
+## M1 — Matriz endpoint × papel
+
+Cada linha está testada em `shop/tests/test_auth.py` (por papel) ou nos testes indicados. 401 = quem és? · 403 = podes? · 404 = existe para ti? · 409 = o estado não deixa.
+
+| Endpoint | anónimo | cliente | gestor | Mecanismo |
+|---|---|---|---|---|
+| `GET /brands/`, `GET /cars/` | 200 | 200 | 200 | `IsGestorOrReadOnly` (leitura aberta) |
+| `POST/PATCH/DELETE /brands/` | 401 | 403 | 201/200/204 | `IsGestorOrReadOnly` |
+| `POST/PATCH/DELETE /cars/` | 401 | 403 | 201/200/204 | `IsGestorOrReadOnly` |
+| `GET /customers/` | 401 | 200, só o seu | 200, todos | filtro no `get_queryset` |
+| `GET/PATCH /customers/{id}/` (seu) | 401 | 200 (`user` ignorado) | 200 | filtro + `IsProfileOwnerOrGestor` |
+| `GET /customers/{id}/` (de outro) | 401 | 404 | 200 | filtro → 404 |
+| `POST/DELETE /customers/` | 401 | 405 | 405 | sem create/destroy no viewset |
+| `GET /orders/` | 401 | 200, só as suas | 200, todas | filtro no `get_queryset` |
+| `GET /orders/{id}/` (de outro) | 401 | 404 | 200 | filtro → 404 |
+| `POST /orders/` com `items` | 401 | 201, dono = eu | 201, dono = eu | `perform_create` + `create_order` |
+| `POST /orders/` com uma linha inválida | 401 | 400, nada criado | 400, nada criado | transação (`test_flow.py`) |
+| `PATCH /orders/{id}/ {"status": ...}` (sua) | 401 | 200, status ignorado | 200, status ignorado | `read_only_fields` |
+| `DELETE /orders/{id}/` (pendente) | 401 | 204 (sua) / 404 (de outro) | 204 | filtro + `delete_order` |
+| `DELETE /orders/{id}/` (paga) | 401 | 409 | 409 | `ensure_pending` (`test_stock.py`) |
+| `POST /orders/{id}/pay/` (sua, pendente) | 401 | 200, cria o Payment | 200 | `pay_order` |
+| `POST /orders/{id}/pay/` (já paga) | 401 | 409 | 409 | `pay_order` |
+| `POST /orders/{id}/pay/` (de outro) | 401 | 404 | 200 | filtro → 404 |
+| `GET /order-items/` | 401 | 200, só das suas encomendas | 200, todas | filtro no `get_queryset` |
+| `POST /order-items/` (encomenda de outro) | 401 | 400 | 201 | `validate_order` |
+| `PATCH/DELETE /order-items/{id}/` (pendente) | 401 | 200/204, stock acertado | 200/204 | `change_quantity` / `remove_item` |
+| `POST/PATCH/DELETE /order-items/` (encomenda paga) | 401 | 409 | 409 | `ensure_pending` |
+| `GET /payments/` | 401 | 200, só os seus | 200, todos | filtro no `get_queryset` |
+| `GET /payments/{id}/` (de outro) | 401 | 404 | 200 | filtro → 404 |
+| `POST /payments/` | 401 | 405 | 405 | `ReadOnlyModelViewSet` |
+| `GET /me/` | 401 | 200 | 200 | `IsAuthenticated` |
+| `POST /auth/logout/` | 200 com um refresh válido | 200 | 200 | `TokenBlacklistView` |
+
+## M1 — Recursos individuais
+
+Cada membro acrescenta aqui as decisões do seu recurso (uma linha cada) e, na tabela acima, as linhas do seu recurso.
