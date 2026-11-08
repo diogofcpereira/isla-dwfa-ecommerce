@@ -73,7 +73,7 @@ Tudo sob `/api/v1/`, com paginação (20 por página), filtros, pesquisa (`?sear
 
 Usámos IA generativa (Claude, da Anthropic) neste projeto:
 
-- **O quê e onde:** Usámos IA generativa (Claude, da Anthropic) como ferramenta de apoio ao desenvolvimento do M1. O Diogo preparou com ela o código base do projeto (adaptação do domínio, API, testes, seed e os recursos individuais), que o grupo seguiu como guia partilhado.
+- **O quê e onde:** usámos IA generativa (Claude, da Anthropic) como ferramenta de apoio no M1. O Diogo usou-a para preparar o guia do grupo: a divisão das tarefas por membro e o código das partes 1 a 6 (adaptação do domínio, API, testes e seed), que o grupo seguiu como guia partilhado. Os recursos individuais foram feitos por cada membro, a partir da especificação do guia.
 - **Como trabalhámos:** cada membro aplicou, leu, testou e fez commit da sua parte e do seu recurso, com o seu nome; a divisão está no [`docs/m1.md`](docs/m1.md).
 - **Como foi verificado:** ruff, `makemigrations --check`, a suite de testes (todos verdes), `check --deploy` com `config.settings.prod`, o `seed` num clone limpo e o fluxo de ponta a ponta com `curl` (login → encomenda com linhas → pagar → 409 ao pagar de novo → logout).
 - **Recurso Review (Filipe):** feito pelo Filipe com o apoio do Claude (claude.ai) para desenhar o modelo, o serializer, as permissões e os testes, e para rever os diffs das partes 2 e 5; o Claude Code fez a auditoria final, em modo só de leitura. Verificado com os testes do recurso, o ruff, o `spectacular --validate` e pedidos `curl`.
