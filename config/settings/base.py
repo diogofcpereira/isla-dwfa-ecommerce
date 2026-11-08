@@ -56,6 +56,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    # M1: todos os erros com a forma da RFC 9457 (application/problem+json)
+    "EXCEPTION_HANDLER": "core.exceptions.problem_details_handler",
     # Ficha 03 · Parte 3: limites por "scope" (usados com ScopedRateThrottle)
     "DEFAULT_THROTTLE_RATES": {
         "auth": "10/minute",  # login: 10 tentativas por minuto por IP

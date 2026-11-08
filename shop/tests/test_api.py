@@ -55,7 +55,7 @@ def test_create_item_and_reject_quantity_above_stock(gestor_api):
         format="json",
     )
     assert bad.status_code == 400
-    assert "quantity" in bad.json()
+    assert "quantity" in bad.json()["errors"]
 
 
 @pytest.mark.django_db
@@ -81,7 +81,7 @@ def test_customer_cannot_add_item_to_someone_elses_order():
         format="json",
     )
     assert r.status_code == 400
-    assert "order" in r.json()  # o erro aponta para o campo order
+    assert "order" in r.json()["errors"]  # o erro aponta para o campo order
     assert not OrderItem.objects.filter(order=other_order).exists()
 
 
@@ -95,7 +95,7 @@ def test_inactive_car_cannot_be_ordered(gestor_api):
         format="json",
     )
     assert r.status_code == 400
-    assert "car" in r.json()
+    assert "car" in r.json()["errors"]
     assert not OrderItem.objects.filter(order=order).exists()
 
 
@@ -112,7 +112,7 @@ def test_car_year_out_of_range_is_rejected(gestor_api):
     }
     r = gestor_api.post("/api/v1/cars/", body, format="json")
     assert r.status_code == 400
-    assert "year" in r.json()
+    assert "year" in r.json()["errors"]
 
 
 @pytest.mark.django_db
