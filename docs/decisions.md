@@ -19,7 +19,7 @@ EN: one line per decision — what, why, rejected alternative. Grows ficha by fi
 
 ## Ficha 02 — API
 
-<!-- --> Ao comentar a linha de prefetch_related, o valor retornado foram 82 queries
+Ao comentar a linha de prefetch_related, o valor retornado foram 82 queries.
 1. **Campo só de leitura** : unit_price é read-only porque o servidor copia o preço do produto no momento da compra; o cliente não pode escolher quanto paga.
 
 2. **Paginação**: PageNumberPagination com 20 por página, porque as listas são pequenas e o frontend precisa do total para mostrar o número de páginas.
@@ -63,7 +63,7 @@ Lista de encomendas: 4 queries (eram 3 na Ficha 02) — a quarta é a verificaç
 em is_gestor(); não cresce com o número de encomendas.
 
 **Matriz endpoint × papel**
-
+```text
 Endpoint                                      Anónimo   Cliente                         Gestor                    Mecanismo
 --------------------------------------------  --------  -----------------------------  ------------------------  ----------------------------------------
 GET /brands/                                  200       200                            200                       IsGestorOrReadOnly (leitura aberta)
@@ -82,7 +82,7 @@ GET /order-items/                             401       200, só das suas encome
 POST /order-items/ (encomenda sua)           401       201                            201                       validate_order
 POST /order-items/ (encomenda de outro)      401       400                            201                       validate_order
 GET /me/                                      401       200                            200                       IsAuthenticated
-
+```
 
 ## Parte 3
 
@@ -119,12 +119,14 @@ login JWT (que tem os seus próprios testes). Total do projeto: 37 testes (eram 
 
 2. Tirando o filtro do get_queryset, falham os seguintes 3 testes: 
 
+```text
 ================================================================================================= 
 short test summary info 
 =================================================================================================
 FAILED shop/tests/test_auth.py::test_list_orders_by_role[customer-200-1] - assert 2 == 1
 FAILED shop/tests/test_auth.py::test_other_customers_order_is_404[get-] - assert 403 == 404
 FAILED shop/tests/test_auth.py::test_other_customers_order_is_404[post-pay/] - assert 403 == 404
+```
 
 Conclusão: o IsOwnerOrGestor sozinho ainda impede ver o detalhe e pagar a encomenda de
 outro, mas responde 403, o que confirma que ela existe, e deixa a lista aberta. São precisas
@@ -235,6 +237,7 @@ Cada linha está testada em `shop/tests/test_auth.py` (por papel) ou nos testes 
 | `POST /payments/` | 401 | 405 | 405 | `ReadOnlyModelViewSet` |
 | `GET /me/` | 401 | 200 | 200 | `IsAuthenticated` |
 | `POST /auth/logout/` | 200 com um refresh válido | 200 | 200 | `TokenBlacklistView` |
+| `DELETE /deliveries/{id}/` | 401 | 403 | 405 | sem DELETE no viewset (a entrega fica no histórico); o DRF verifica a autenticação e as permissões antes do método, por isso o cliente recebe 403 e só o gestor chega ao 405 |
 
 ## M1 — Recursos individuais
 
