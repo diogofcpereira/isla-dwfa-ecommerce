@@ -12,9 +12,9 @@ O DriveNow é a API de um stand de carros. O catálogo tem marcas e viaturas (mo
 
 | Membro | Nº | Recurso individual |
 |---|---|---|
-| Diogo Pereira | `<nº>` | Delivery — entregas (`/api/v1/deliveries/`) |
-| Filipe Cardoso | `<nº>` | Review — avaliações de viaturas (`/api/v1/reviews/`) |
-| Rúben Afonso | `<nº>` | TestDrive — marcações de test drive (`/api/v1/test-drives/`) |
+| Diogo Pereira | `a22604547` | Delivery — entregas (`/api/v1/deliveries/`) |
+| Filipe Cardoso | `a22601943` | Review — avaliações de viaturas (`/api/v1/reviews/`) |
+| Rúben Afonso | `a22605044` | TestDrive — marcações de test drive (`/api/v1/test-drives/`) |
 
 Quem fez o quê, com links para os commits e pull requests: [`docs/m1.md`](docs/m1.md). As decisões: [`docs/decisions.md`](docs/decisions.md).
 
@@ -76,3 +76,4 @@ Usámos IA generativa (Claude, da Anthropic) neste projeto:
 - **O quê e onde:** Usámos IA generativa (Claude, da Anthropic) como ferramenta de apoio ao desenvolvimento do M1. O Diogo preparou com ela o código base do projeto (adaptação do domínio, API, testes, seed e os recursos individuais), que o grupo seguiu como guia partilhado.
 - **Como trabalhámos:** cada membro aplicou, leu, testou e fez commit da sua parte e do seu recurso, com o seu nome; a divisão está no [`docs/m1.md`](docs/m1.md).
 - **Como foi verificado:** ruff, `makemigrations --check`, a suite de testes (todos verdes), `check --deploy` com `config.settings.prod`, o `seed` num clone limpo e o fluxo de ponta a ponta com `curl` (login → encomenda com linhas → pagar → 409 ao pagar de novo → logout).
+- **Recurso Review (Filipe):** feito pelo Filipe com o apoio do Claude (claude.ai) para desenhar o modelo, o serializer, as permissões e os testes, e para rever os diffs das partes 2 e 5; o Claude Code fez a auditoria final, em modo só de leitura. Verificado com os testes do recurso, o ruff, o `spectacular --validate` e pedidos `curl`.
