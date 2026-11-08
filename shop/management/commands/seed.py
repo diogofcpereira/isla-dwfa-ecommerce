@@ -17,6 +17,8 @@ from shop.factories import BrandFactory, CarFactory, CustomerFactory
 from shop.models import Brand, Car, Customer, Order, OrderItem, Payment
 from shop.permissions import GESTORES
 from shop.services import create_order, pay_order
+from testdrives import services as testdrive_services
+from testdrives.models import TestDrive
 
 # Catálogo de demonstração do DriveNow: (marca, modelo, versão, combustível, preço base).
 CATALOGUE = [
@@ -69,6 +71,7 @@ class Command(BaseCommand):
         for _ in range(max(missing, 0)):
             self.order(random.choice(customers), random.choice(STATES))
         self.reviews()
+        self.test_drives()
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -165,3 +168,28 @@ class Command(BaseCommand):
                     "status": statuses[i % 3],
                 },
             )
+
+    def test_drives(self):
+        """Test drives das contas de demonstração: futuros, à hora certa, em estados diferentes."""
+        start = (timezone.localtime() + timedelta(days=1)).replace(
+            hour=10, minute=0, second=0, microsecond=0
+        )
+        cars = list(Car.objects.filter(is_active=True).order_by("code")[:6])
+        steps = [  # pedido, confirmado, recusado, cancelado (pelos serviços, como na API)
+            None,
+            testdrive_services.confirm,
+            testdrive_services.decline,
+            testdrive_services.cancel,
+        ]
+        demo = Customer.objects.filter(user__username__in=DEMO_CUSTOMERS).order_by("user__username")
+        for i, customer in enumerate(demo):
+            for j in range(2):
+                n = i * 2 + j
+                car = cars[n]  # uma viatura diferente por marcação: nenhum horário em conflito
+                if TestDrive.objects.filter(customer=customer, car=car).exists():
+                    continue  # idempotente: já foi marcado numa execução anterior
+                test_drive = testdrive_services.book_test_drive(
+                    customer, car, start + timedelta(days=n, hours=n % 4)
+                )
+                if steps[n % 4]:
+                    steps[n % 4](test_drive)
