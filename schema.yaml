@@ -1452,6 +1452,268 @@ paths:
               schema:
                 $ref: '#/components/schemas/Payment'
           description: ''
+  /api/v1/reviews/:
+    get:
+      operationId: v1_reviews_list
+      description: |-
+        Avaliações de viaturas.
+
+        - anónimos: veem as aprovadas;
+        - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+        - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+      parameters:
+      - in: query
+        name: car
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: rating
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - approved
+          - hidden
+          - pending
+        description: |-
+          * `pending` - Pendente
+          * `approved` - Aprovada
+          * `hidden` - Oculta
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedReviewList'
+          description: ''
+    post:
+      operationId: v1_reviews_create
+      description: |-
+        Avaliações de viaturas.
+
+        - anónimos: veem as aprovadas;
+        - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+        - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Review'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Review'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Review'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+  /api/v1/reviews/{id}/:
+    get:
+      operationId: v1_reviews_retrieve
+      description: |-
+        Avaliações de viaturas.
+
+        - anónimos: veem as aprovadas;
+        - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+        - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this review.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+    put:
+      operationId: v1_reviews_update
+      description: |-
+        Avaliações de viaturas.
+
+        - anónimos: veem as aprovadas;
+        - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+        - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this review.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Review'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Review'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Review'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+    patch:
+      operationId: v1_reviews_partial_update
+      description: |-
+        Avaliações de viaturas.
+
+        - anónimos: veem as aprovadas;
+        - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+        - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this review.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedReview'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedReview'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedReview'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+    delete:
+      operationId: v1_reviews_destroy
+      description: |-
+        Avaliações de viaturas.
+
+        - anónimos: veem as aprovadas;
+        - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+        - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this review.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/reviews/{id}/moderate/:
+    post:
+      operationId: v1_reviews_moderate_create
+      description: |-
+        Avaliações de viaturas.
+
+        - anónimos: veem as aprovadas;
+        - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+        - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this review.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Moderation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Moderation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Moderation'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
 components:
   schemas:
     Brand:
@@ -1645,6 +1907,22 @@ components:
         * `financing` - Financiamento
         * `card` - Cartão
         * `mbway` - MB WAY
+    Moderation:
+      type: object
+      description: Corpo de POST /reviews/{id}/moderate/.
+      properties:
+        status:
+          $ref: '#/components/schemas/ModerationStatusEnum'
+      required:
+      - status
+    ModerationStatusEnum:
+      enum:
+      - approved
+      - hidden
+      type: string
+      description: |-
+        * `approved` - approved
+        * `hidden` - hidden
     Order:
       type: object
       properties:
@@ -1907,6 +2185,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Payment'
+    PaginatedReviewList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Review'
     PatchedBrand:
       type: object
       properties:
@@ -2067,6 +2368,40 @@ components:
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
           readOnly: true
+    PatchedReview:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        car:
+          type: integer
+        car_name:
+          type: string
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+        author:
+          type: string
+          readOnly: true
+        rating:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        comment:
+          type: string
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ReviewStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
     Pay:
       type: object
       description: Corpo de POST /orders/{id}/pay/.
@@ -2107,6 +2442,60 @@ components:
       - method_display
       - order
       - paid_at
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        car:
+          type: integer
+        car_name:
+          type: string
+          readOnly: true
+        customer:
+          type: integer
+          readOnly: true
+        author:
+          type: string
+          readOnly: true
+        rating:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        comment:
+          type: string
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ReviewStatusEnum'
+          readOnly: true
+        status_display:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - author
+      - car
+      - car_name
+      - created_at
+      - customer
+      - id
+      - rating
+      - status
+      - status_display
+    ReviewStatusEnum:
+      enum:
+      - pending
+      - approved
+      - hidden
+      type: string
+      description: |-
+        * `pending` - Pendente
+        * `approved` - Aprovada
+        * `hidden` - Oculta
     TokenBlacklist:
       type: object
       properties:
