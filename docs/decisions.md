@@ -198,3 +198,16 @@ Cada linha está testada em `shop/tests/test_auth.py` (por papel) ou nos testes 
 ## M1 — Recursos individuais
 
 Cada membro acrescenta aqui as decisões do seu recurso (uma linha cada) e, na tabela acima, as linhas do seu recurso.
+
+1. Delivery — entrega da viatura (Diogo)
+Só encomendas pagas, uma entrega por encomenda: Delivery.order é um OneToOneField com PROTECT, e o validate_order recusa encomendas que não estejam pagas (400). Rejeitado: uma FK com várias entregas por encomenda, que complicava saber quando a encomenda fica entregue.
+O estado só muda por ações: POST /deliveries/{id}/ship/ (agendada → em trânsito) e /complete/ (→ entregue) são serviços com select_for_update, e repetir dá 409. O complete passa a encomenda a delivered na mesma transação. Rejeitado: PATCH {"status": ...}, que deixava saltar estados e esquecer a encomenda.
+ck_delivery_delivered_at_matches_status: a base de dados garante que só uma entrega concluída tem delivered_at, e que todas as concluídas o têm.
+Leitura para o cliente, escrita para o gestor: IsAuthenticated + IsGestorOrReadOnly + IsDeliveryOwnerOrGestor, com o filtro no get_queryset (404 nas entregas de outros). Não há DELETE: a entrega fica no histórico da encomenda.
+
+
+Endpoint	                                         anónimo	cliente	                            gestor	                                                            Mecanismo
+GET /deliveries/	                                  401	    200, só as das suas encomendas	    200, todas	                                                        filtro no get_queryset
+GET /deliveries/{id}/ (de outro)	                  401	    404	                                200	filtro → 404
+POST/PATCH /deliveries/	                              401	    403	                                201/200; 400 se a encomenda não estiver paga ou já tiver entrega	    IsGestorOrReadOnly + validate_order
+POST /deliveries/{id}/ship/, /complete/	              401	    403	                                200; 409 se repetido	                                IsGestorOrReadOnly + serviços
