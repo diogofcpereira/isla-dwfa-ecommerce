@@ -63,26 +63,24 @@ Lista de encomendas: 4 queries (eram 3 na Ficha 02) — a quarta é a verificaç
 em is_gestor(); não cresce com o número de encomendas.
 
 **Matriz endpoint × papel**
-```text
-Endpoint                                      Anónimo   Cliente                         Gestor                    Mecanismo
---------------------------------------------  --------  -----------------------------  ------------------------  ----------------------------------------
-GET /brands/                                  200       200                            200                       IsGestorOrReadOnly (leitura aberta)
-POST/PATCH/DELETE /brands/                    401       403                            201/200/204               IsGestorOrReadOnly
-GET /cars/                                    200       200                            200                       IsGestorOrReadOnly (leitura aberta)
-POST /cars/                                   401       403                            201                       IsGestorOrReadOnly
-PATCH/DELETE /cars/{id}/                     401       403                            200/204                   IsGestorOrReadOnly
-GET /orders/                                  401       200, só as suas               200, todas               filtro no get_queryset
-GET /orders/{id}/ (sua)                      401       200                            200                       filtro + IsOwnerOrGestor
-GET /orders/{id}/ (de outro)                 401       404                            200                       filtro → 404
-POST /orders/                                 401       201, dono = eu                 201, dono = eu            perform_create + customer read-only
-PATCH /orders/{id}/ {"status": ...} (sua)    401       200, status ignorado           200, status ignorado      read_only_fields
-POST /orders/{id}/pay/ (sua, pendente)       401       200                            200                       get_object + IsOwnerOrGestor
-POST /orders/{id}/pay/ (de outro)            401       404                            200                       filtro → 404
-GET /order-items/                             401       200, só das suas encomendas   200, todas               filtro no get_queryset
-POST /order-items/ (encomenda sua)           401       201                            201                       validate_order
-POST /order-items/ (encomenda de outro)      401       400                            201                       validate_order
-GET /me/                                      401       200                            200                       IsAuthenticated
-```
+
+Endpoint	                                  anónimo	cliente	                      gestor	              Mecanismo
+GET /categories/	                            200	      200	                        200	                  AllowAny
+GET /products/	                                200	      200	                        200	                  IsGestorOrReadOnly (leitura aberta)
+POST /products/	                                401	      403	                        201	                  IsGestorOrReadOnly
+PATCH/DELETE /products/{id}/	                401	      403	                        200/204	              IsGestorOrReadOnly
+GET /orders/	                                401	      200, só as suas	            200, todas	          filtro no get_queryset
+GET /orders/{id}/ (sua)	                        401	      200	                        200	                  filtro + IsOwnerOrGestor
+GET /orders/{id}/ (de outro)	                401	      404	                        200	                  filtro → 404
+POST /orders/	                                401	      201, dono = eu	            201, dono  = eu   	  perform_create + customer read-only
+PATCH /orders/{id}/ {"status": ...} (sua)	    401	      200, status ignorado	        200, status ignorado  read_only_fields
+POST /orders/{id}/pay/ (sua, pendente)	        401	      200	                        200	                  get_object + IsOwnerOrGestor
+POST /orders/{id}/pay/ (de outro)	            401	      404	                        200	                  filtro → 404
+GET /order-items/	                            401	      200, só das suas encomendas	200, todas	          filtro no get_queryset
+POST /order-items/ (encomenda sua)	            401	      201	                        201                   validate_order
+POST /order-items/ (encomenda de outro)	        401	      400	                        201	                  validate_order
+GET /me/	                                    401	      200	                        200	                  IsAuthenticated
+
 
 ## Parte 3
 
