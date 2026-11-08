@@ -133,3 +133,25 @@ def test_review_list_has_no_n_plus_one(django_assert_max_num_queries):
     with django_assert_max_num_queries(3):  # count + avaliações com viatura, marca e autor
         r = APIClient().get("/api/v1/reviews/")
     assert r.status_code == 200 and len(r.json()["results"]) == 20
+
+
+@pytest.mark.parametrize(
+    "role,visible",
+    [
+        ("anon", {"approved"}),
+        ("customer", {"approved", "mine"}),
+        ("gestor", {"approved", "mine", "hidden"}),
+    ],
+)
+def test_review_list_by_role(gestor, role, visible):
+    car = CarFactory()
+    me = buyer_of(car)
+    made = {
+        "approved": review(car, buyer_of(car), status="approved"),
+        "mine": review(car, me),  # pendente, do próprio cliente
+        "hidden": review(car, buyer_of(car), status="hidden"),
+    }
+    users = {"anon": None, "customer": me.user, "gestor": gestor}
+    r = as_(users[role]).get("/api/v1/reviews/")
+    assert r.status_code == 200
+    assert {x["id"] for x in r.json()["results"]} == {made[k].id for k in visible}

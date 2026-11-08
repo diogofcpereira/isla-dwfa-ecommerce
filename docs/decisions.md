@@ -19,7 +19,7 @@ EN: one line per decision — what, why, rejected alternative. Grows ficha by fi
 
 ## Ficha 02 — API
 
-<!-- --> Ao comentar a linha de prefetch_related, o valor retornado foram 82 queries
+Ao comentar a linha de prefetch_related, o valor retornado foram 82 queries.
 1. **Campo só de leitura** : unit_price é read-only porque o servidor copia o preço do produto no momento da compra; o cliente não pode escolher quanto paga.
 
 2. **Paginação**: PageNumberPagination com 20 por página, porque as listas são pequenas e o frontend precisa do total para mostrar o número de páginas.
@@ -63,26 +63,24 @@ Lista de encomendas: 4 queries (eram 3 na Ficha 02) — a quarta é a verificaç
 em is_gestor(); não cresce com o número de encomendas.
 
 **Matriz endpoint × papel**
-
-Endpoint                                      Anónimo   Cliente                         Gestor                    Mecanismo
---------------------------------------------  --------  -----------------------------  ------------------------  ----------------------------------------
-GET /brands/                                  200       200                            200                       IsGestorOrReadOnly (leitura aberta)
-POST/PATCH/DELETE /brands/                    401       403                            201/200/204               IsGestorOrReadOnly
-GET /cars/                                    200       200                            200                       IsGestorOrReadOnly (leitura aberta)
-POST /cars/                                   401       403                            201                       IsGestorOrReadOnly
-PATCH/DELETE /cars/{id}/                     401       403                            200/204                   IsGestorOrReadOnly
-GET /orders/                                  401       200, só as suas               200, todas               filtro no get_queryset
-GET /orders/{id}/ (sua)                      401       200                            200                       filtro + IsOwnerOrGestor
-GET /orders/{id}/ (de outro)                 401       404                            200                       filtro → 404
-POST /orders/                                 401       201, dono = eu                 201, dono = eu            perform_create + customer read-only
-PATCH /orders/{id}/ {"status": ...} (sua)    401       200, status ignorado           200, status ignorado      read_only_fields
-POST /orders/{id}/pay/ (sua, pendente)       401       200                            200                       get_object + IsOwnerOrGestor
-POST /orders/{id}/pay/ (de outro)            401       404                            200                       filtro → 404
-GET /order-items/                             401       200, só das suas encomendas   200, todas               filtro no get_queryset
-POST /order-items/ (encomenda sua)           401       201                            201                       validate_order
-POST /order-items/ (encomenda de outro)      401       400                            201                       validate_order
-GET /me/                                      401       200                            200                       IsAuthenticated
-
+```text
+Endpoint	                                  anónimo	cliente	                      gestor	              Mecanismo
+GET /categories/	                            200	      200	                        200	                  AllowAny
+GET /products/	                                200	      200	                        200	                  IsGestorOrReadOnly (leitura aberta)
+POST /products/	                                401	      403	                        201	                  IsGestorOrReadOnly
+PATCH/DELETE /products/{id}/	                401	      403	                        200/204	              IsGestorOrReadOnly
+GET /orders/	                                401	      200, só as suas	            200, todas	          filtro no get_queryset
+GET /orders/{id}/ (sua)	                        401	      200	                        200	                  filtro + IsOwnerOrGestor
+GET /orders/{id}/ (de outro)	                401	      404	                        200	                  filtro → 404
+POST /orders/	                                401	      201, dono = eu	            201, dono  = eu   	  perform_create + customer read-only
+PATCH /orders/{id}/ {"status": ...} (sua)	    401	      200, status ignorado	        200, status ignorado  read_only_fields
+POST /orders/{id}/pay/ (sua, pendente)	        401	      200	                        200	                  get_object + IsOwnerOrGestor
+POST /orders/{id}/pay/ (de outro)	            401	      404	                        200	                  filtro → 404
+GET /order-items/	                            401	      200, só das suas encomendas	200, todas	          filtro no get_queryset
+POST /order-items/ (encomenda sua)	            401	      201	                        201                   validate_order
+POST /order-items/ (encomenda de outro)	        401	      400	                        201	                  validate_order
+GET /me/	                                    401	      200	                        200	                  IsAuthenticated
+```
 
 ## Parte 3
 
@@ -119,12 +117,14 @@ login JWT (que tem os seus próprios testes). Total do projeto: 37 testes (eram 
 
 2. Tirando o filtro do get_queryset, falham os seguintes 3 testes: 
 
+```text
 ================================================================================================= 
 short test summary info 
 =================================================================================================
 FAILED shop/tests/test_auth.py::test_list_orders_by_role[customer-200-1] - assert 2 == 1
 FAILED shop/tests/test_auth.py::test_other_customers_order_is_404[get-] - assert 403 == 404
 FAILED shop/tests/test_auth.py::test_other_customers_order_is_404[post-pay/] - assert 403 == 404
+```
 
 Conclusão: o IsOwnerOrGestor sozinho ainda impede ver o detalhe e pagar a encomenda de
 outro, mas responde 403, o que confirma que ela existe, e deixa a lista aberta. São precisas
@@ -218,6 +218,7 @@ Cada linha está testada em `shop/tests/test_auth.py` (por papel) ou nos testes 
 | `POST/DELETE /customers/` | 401 | 405 | 405 | sem create/destroy no viewset |
 | `GET /orders/` | 401 | 200, só as suas | 200, todas | filtro no `get_queryset` |
 | `GET /orders/{id}/` (de outro) | 401 | 404 | 200 | filtro → 404 |
+| `GET /orders/{id}/` (sua) | 401 | 200 | 200 | filtro + `IsOwnerOrGestor` |
 | `POST /orders/` com `items` | 401 | 201, dono = eu | 201, dono = eu | `perform_create` + `create_order` |
 | `POST /orders/` com uma linha inválida | 401 | 400, nada criado | 400, nada criado | transação (`test_flow.py`) |
 | `PATCH /orders/{id}/ {"status": ...}` (sua) | 401 | 200, status ignorado | 200, status ignorado | `read_only_fields` |
@@ -227,6 +228,8 @@ Cada linha está testada em `shop/tests/test_auth.py` (por papel) ou nos testes 
 | `POST /orders/{id}/pay/` (já paga) | 401 | 409 | 409 | `pay_order` |
 | `POST /orders/{id}/pay/` (de outro) | 401 | 404 | 200 | filtro → 404 |
 | `GET /order-items/` | 401 | 200, só das suas encomendas | 200, todas | filtro no `get_queryset` |
+| `GET /order-items/{id}/` (de outro) | 401 | 404 | 200 | filtro → 404 |
+| `POST /order-items/` (encomenda sua, pendente) | 401 | 201, stock descontado | 201 | `validate_order` + `add_item` |
 | `POST /order-items/` (encomenda de outro) | 401 | 400 | 201 | `validate_order` |
 | `PATCH/DELETE /order-items/{id}/` (pendente) | 401 | 200/204, stock acertado | 200/204 | `change_quantity` / `remove_item` |
 | `POST/PATCH/DELETE /order-items/` (encomenda paga) | 401 | 409 | 409 | `ensure_pending` |
@@ -234,7 +237,10 @@ Cada linha está testada em `shop/tests/test_auth.py` (por papel) ou nos testes 
 | `GET /payments/{id}/` (de outro) | 401 | 404 | 200 | filtro → 404 |
 | `POST /payments/` | 401 | 405 | 405 | `ReadOnlyModelViewSet` |
 | `GET /me/` | 401 | 200 | 200 | `IsAuthenticated` |
+| `POST /auth/token/` | 200 com credenciais válidas; 401 sem elas; 429 à 11.ª tentativa no mesmo minuto | 200 | 200 | `ThrottledTokenView` |
+| `POST /auth/token/refresh/` | 200 com um refresh válido; 401 se inválido ou na blacklist | 200 | 200 | `TokenRefreshView` com rotação |
 | `POST /auth/logout/` | 200 com um refresh válido | 200 | 200 | `TokenBlacklistView` |
+| `DELETE /deliveries/{id}/` | 401 | 403 | 405 | sem DELETE no viewset (a entrega fica no histórico); o DRF verifica a autenticação e as permissões antes do método, por isso o cliente recebe 403 e só o gestor chega ao 405 |
 
 ## M1 — Recursos individuais
 
@@ -243,7 +249,7 @@ Um recurso por membro, cada um na sua app Django (`deliveries`, `reviews`, `test
 ### Delivery — entrega da viatura (Diogo)
 
 19. **Só encomendas pagas, uma entrega por encomenda:** `Delivery.order` é um `OneToOneField` com `PROTECT`, e o `validate_order` recusa encomendas que não estejam pagas (400). Rejeitado: uma FK com várias entregas por encomenda, que complicava saber quando a encomenda fica entregue.
-20. **O estado só muda por ações:** `POST /deliveries/{id}/ship/` (agendada → em trânsito) e `/complete/` (→ entregue) são serviços com `select_for_update`, e repetir dá 409. O `complete` passa a encomenda a `delivered` na mesma transação. Rejeitado: `PATCH {"status": ...}`, que deixava saltar estados e esquecer a encomenda.
+20. **O estado só muda por ações:** `POST /deliveries/{id}/ship/` (agendada → em trânsito) e `/complete/` (→ entregue) são serviços com `select_for_update`, e repetir dá 409. O `complete` passa a encomenda a `delivered` na mesma transação. Rejeitado: `PATCH {"status": ...}`, que deixava saltar estados e esquecer a encomenda. Uma entrega concluída já não se altera (409), porque é o registo do que aconteceu; e dois pedidos simultâneos para a mesma encomenda dão 400, e não 500, porque o `IntegrityError` da `OneToOneField` é convertido num erro de validação.
 21. **`ck_delivery_delivered_at_matches_status`:** a base de dados garante que só uma entrega concluída tem `delivered_at`, e que todas as concluídas o têm.
 22. **Leitura para o cliente, escrita para o gestor:** `IsAuthenticated` + `IsGestorOrReadOnly` + `IsDeliveryOwnerOrGestor`, com o filtro no `get_queryset` (404 nas entregas de outros). Não há DELETE: a entrega fica no histórico da encomenda.
 
@@ -252,6 +258,7 @@ Um recurso por membro, cada um na sua app Django (`deliveries`, `reviews`, `test
 | `GET /deliveries/` | 401 | 200, só as das suas encomendas | 200, todas | filtro no `get_queryset` |
 | `GET /deliveries/{id}/` (de outro) | 401 | 404 | 200 | filtro → 404 |
 | `POST/PATCH /deliveries/` | 401 | 403 | 201/200; 400 se a encomenda não estiver paga ou já tiver entrega | `IsGestorOrReadOnly` + `validate_order` |
+| `PATCH /deliveries/{id}/` (concluída) | 401 | 403 | 409 | `perform_update` |
 | `POST /deliveries/{id}/ship/`, `/complete/` | 401 | 403 | 200; 409 se repetido | `IsGestorOrReadOnly` + serviços |
 
 ### Review — avaliação da viatura (Filipe)
@@ -264,9 +271,11 @@ Um recurso por membro, cada um na sua app Django (`deliveries`, `reviews`, `test
 | Endpoint | anónimo | cliente | gestor | Mecanismo |
 |---|---|---|---|---|
 | `GET /reviews/` | 200, só as aprovadas | 200, as aprovadas e as suas | 200, todas | filtro no `get_queryset` |
+| `GET /reviews/{id}/` (pendente ou oculta de outro) | 404 | 404 | 200 | filtro → 404 |
 | `POST /reviews/` | 401 | 201 se comprou; 400 se não comprou ou se repetir | 201 se comprou | `validate` |
 | `PATCH/DELETE /reviews/{id}/` (sua) | 401 | 200 (volta a pendente) / 204 | 200/204 | `IsReviewAuthorOrGestor` |
 | `PATCH/DELETE /reviews/{id}/` (aprovada, de outro) | 401 | 403 | 200/204 | `IsReviewAuthorOrGestor` |
+| `PATCH/DELETE /reviews/{id}/` (pendente ou oculta de outro) | 401 | 404 | 200/204 | filtro → 404 |
 | `POST /reviews/{id}/moderate/` | 401 | 403 | 200 | `IsGestor` |
 
 ### TestDrive — marcação de test drive (Rúben)
@@ -279,6 +288,8 @@ Um recurso por membro, cada um na sua app Django (`deliveries`, `reviews`, `test
 | Endpoint | anónimo | cliente | gestor | Mecanismo |
 |---|---|---|---|---|
 | `GET /test-drives/` | 401 | 200, só os seus | 200, todos | filtro no `get_queryset` |
+| `GET /test-drives/{id}/` (de outro) | 401 | 404 | 200 | filtro → 404 |
+| `PUT/PATCH/DELETE /test-drives/{id}/` | 401 | 405 | 405 | sem update nem destroy no viewset; o `IsAuthenticated` responde primeiro ao anónimo |
 | `POST /test-drives/` | 401 | 201; 400 no passado, fora da hora certa, viatura retirada ou horário ocupado | 201 | `validate` + `uq_testdrive_car_slot_active` |
 | `POST /test-drives/{id}/confirm/`, `/decline/` | 401 | 403 | 200; 409 se já não estiver pedido | `IsGestor` + serviços |
 | `POST /test-drives/{id}/cancel/` | 401 | 200 (seu) / 404 (de outro); 409 se já não estiver ativo | 200 | filtro + `IsTestDriveOwnerOrGestor` |

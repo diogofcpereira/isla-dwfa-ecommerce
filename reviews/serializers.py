@@ -10,7 +10,6 @@ BOUGHT = [Order.Status.PAID, Order.Status.DELIVERED]
 
 class ReviewSerializer(serializers.ModelSerializer):
     car_name = serializers.CharField(source="car.name", read_only=True)
-    author = serializers.CharField(source="customer.user.username", read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
 
     class Meta:
@@ -20,7 +19,6 @@ class ReviewSerializer(serializers.ModelSerializer):
             "car",
             "car_name",
             "customer",
-            "author",
             "rating",
             "comment",
             "status",

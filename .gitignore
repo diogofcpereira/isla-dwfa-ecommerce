@@ -24,3 +24,4 @@ staticfiles/
 
 # override local · local override
 compose.override.yaml
+.eslintcache

@@ -2613,9 +2613,6 @@ components:
         customer:
           type: integer
           readOnly: true
-        author:
-          type: string
-          readOnly: true
         rating:
           type: integer
           maximum: 32767
@@ -2687,9 +2684,6 @@ components:
         customer:
           type: integer
           readOnly: true
-        author:
-          type: string
-          readOnly: true
         rating:
           type: integer
           maximum: 32767
@@ -2708,7 +2702,6 @@ components:
           format: date-time
           readOnly: true
       required:
-      - author
       - car
       - car_name
       - created_at

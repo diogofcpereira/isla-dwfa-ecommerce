@@ -21,6 +21,8 @@ class TestDrive(models.Model):
 
     # PROTECT: uma viatura com marcações não se apaga (retira-se com is_active=False).
     car = models.ForeignKey("shop.Car", on_delete=models.PROTECT, related_name="test_drives")
+    # CASCADE: a marcação é do cliente e desaparece com o perfil dele; na prática, um cliente
+    # com encomendas não se apaga, porque o Order.customer é PROTECT.
     customer = models.ForeignKey(
         "shop.Customer", on_delete=models.CASCADE, related_name="test_drives"
     )

@@ -12,9 +12,9 @@ O DriveNow é a API de um stand de carros. O catálogo tem marcas e viaturas (mo
 
 | Membro | Nº | Recurso individual |
 |---|---|---|
-| Diogo Pereira | `<nº>` | Delivery — entregas (`/api/v1/deliveries/`) |
-| Filipe Cardoso | `<nº>` | Review — avaliações de viaturas (`/api/v1/reviews/`) |
-| Rúben Afonso | `<nº>` | TestDrive — marcações de test drive (`/api/v1/test-drives/`) |
+| Diogo Pereira | `a22604547` | Delivery — entregas (`/api/v1/deliveries/`) |
+| Filipe Cardoso | `a22601943` | Review — avaliações de viaturas (`/api/v1/reviews/`) |
+| Rúben Afonso | `a22605044` | TestDrive — marcações de test drive (`/api/v1/test-drives/`) |
 
 Quem fez o quê, com links para os commits e pull requests: [`docs/m1.md`](docs/m1.md). As decisões: [`docs/decisions.md`](docs/decisions.md).
 
@@ -73,6 +73,9 @@ Tudo sob `/api/v1/`, com paginação (20 por página), filtros, pesquisa (`?sear
 
 Usámos IA generativa (Claude, da Anthropic) neste projeto:
 
-- **O quê e onde:** Usámos IA generativa (Claude, da Anthropic) como ferramenta de apoio ao desenvolvimento do M1. O Diogo preparou com ela o código base do projeto (adaptação do domínio, API, testes, seed e os recursos individuais), que o grupo seguiu como guia partilhado.
+- **O quê e onde:** usámos IA generativa (Claude, da Anthropic) como ferramenta de apoio no M1. O Diogo usou-a para preparar o guia do grupo: a divisão das tarefas por membro e o código das partes 1 a 6 (adaptação do domínio, API, testes e seed), que o grupo seguiu como guia partilhado. Os recursos individuais foram feitos por cada membro, a partir da especificação do guia.
 - **Como trabalhámos:** cada membro aplicou, leu, testou e fez commit da sua parte e do seu recurso, com o seu nome; a divisão está no [`docs/m1.md`](docs/m1.md).
 - **Como foi verificado:** ruff, `makemigrations --check`, a suite de testes (todos verdes), `check --deploy` com `config.settings.prod`, o `seed` num clone limpo e o fluxo de ponta a ponta com `curl` (login → encomenda com linhas → pagar → 409 ao pagar de novo → logout).
+- **Recurso Delivery (Diogo):** O código do recurso (modelo, migração gerada com `makemigrations`, serializer, permissões, serviços `ship`/`complete`, viewset e testes) foi preparado com o apoio do Claude (claude.ai) no guia do M1, tal como o das partes 1 a 6; o Diogo aplicou-o na app `deliveries`, leu-o, testou-o e fez os commits. Quando o CI do push falhou por faltar a linha final em 10 ficheiros, corrigiu-o com `ruff format` num commit à parte. Depois da auditoria, corrigiu dois casos com testes novos: uma entrega concluída já não se altera (409) e dois pedidos simultâneos para a mesma encomenda dão 400 em vez de 500. Verificado com os testes do recurso, o ruff, o `makemigrations --check`, o `sqlmigrate` da migração e pedidos `curl`, com os quais confirmou que concluir uma entrega passa a encomenda a entregue e que repetir dá 409.
+- **Recurso Review (Filipe):** O código do recurso (modelo, migração gerada com makemigrations, serializer, permissões, viewset com a ação moderate e testes) foi preparado com o apoio do Claude (claude.ai) no guia do M1, tal como o das partes 1 a 6; o Filipe aplicou-o na app reviews, leu-o, testou-o e fez os commits. Usou também o Claude para rever os diffs das partes 2 e 5, e o Claude Code fez uma auditoria final ao projeto, em modo só de leitura. Verificado com os testes do recurso, o ruff, o makemigrations --check, o spectacular --validate e pedidos curl.
+- **Recurso Test drives (Rúben):** O código do recurso (modelo, serializer, permissões, serviço, views e testes) foi preparado com o apoio do Claude (claude.ai) no guia do M1; o Rúben aplicou-o na app `testdrives`, leu-o, testou-o e fez os commits. Verificado com os testes do recurso, o ruff, o `makemigrations --check` e pedidos `curl`.

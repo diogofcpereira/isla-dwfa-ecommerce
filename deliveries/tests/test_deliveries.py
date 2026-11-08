@@ -129,3 +129,29 @@ def test_delivery_list_has_no_n_plus_one(actors, django_assert_max_num_queries):
     with django_assert_max_num_queries(3):  # grupos + count + entregas com a encomenda
         r = as_(actors["gestor"]).get("/api/v1/deliveries/")
     assert r.status_code == 200 and len(r.json()["results"]) == 20
+
+
+def test_completed_delivery_cannot_be_changed(actors):
+    delivery = delivery_for(paid_order())
+    api = as_(actors["gestor"])
+    assert api.post(f"/api/v1/deliveries/{delivery.id}/complete/").status_code == 200
+
+    r = api.patch(f"/api/v1/deliveries/{delivery.id}/", {"address": "Outra rua, 2"}, format="json")
+    assert r.status_code == 409
+    delivery.refresh_from_db()
+    assert delivery.address == "Rua do Stand, 1"
+
+
+def test_two_simultaneous_deliveries_for_the_same_order_give_400_not_500(actors, monkeypatch):
+    # Simula a corrida: desliga a verificação do serializer, como se os dois pedidos
+    # a tivessem passado ao mesmo tempo; quem trava o segundo é a OneToOneField.
+    from rest_framework.validators import UniqueValidator
+
+    monkeypatch.setattr(UniqueValidator, "__call__", lambda self, value, field: None)
+    order = paid_order()
+    delivery_for(order)
+    body = {"order": order.id, "scheduled_for": tomorrow().isoformat(), "address": "Rua A"}
+    r = as_(actors["gestor"]).post("/api/v1/deliveries/", body, format="json")
+    assert r.status_code == 400
+    assert "order" in r.json()["errors"]
+    assert Delivery.objects.filter(order=order).count() == 1

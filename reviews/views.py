@@ -1,9 +1,11 @@
 """Views do recurso Review."""
 
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
@@ -43,7 +45,14 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         customer, _ = Customer.objects.get_or_create(user=self.request.user)
-        serializer.save(customer=customer)
+        try:
+            with transaction.atomic():
+                serializer.save(customer=customer)
+        except IntegrityError:
+            # Dois pedidos ao mesmo tempo passam ambos no validate; a constraint apanha o segundo.
+            raise ValidationError(
+                {"car": "Já avaliou esta viatura: edite a sua avaliação."}
+            ) from None
 
     def perform_update(self, serializer):
         # Uma avaliação editada volta a precisar de moderação.

@@ -1,17 +1,24 @@
 import random
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import F
+from django.utils import timezone
 from django.utils.text import slugify
 
 from accounts.factories import UserFactory
+from deliveries.models import Delivery
+from deliveries.services import complete_delivery, ship_delivery
+from reviews.models import Review
 from shop.factories import BrandFactory, CarFactory, CustomerFactory
-from shop.models import Brand, Car, Customer, Order, Payment
+from shop.models import Brand, Car, Customer, Order, OrderItem, Payment
 from shop.permissions import GESTORES
 from shop.services import create_order, pay_order
+from testdrives import services as testdrive_services
+from testdrives.models import TestDrive
 
 # Catálogo de demonstração do DriveNow: (marca, modelo, versão, combustível, preço base).
 CATALOGUE = [
@@ -63,6 +70,8 @@ class Command(BaseCommand):
         missing = opts["orders"] - Order.objects.count()
         for _ in range(max(missing, 0)):
             self.order(random.choice(customers), random.choice(STATES))
+        self.reviews()
+        self.test_drives()
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -115,10 +124,72 @@ class Command(BaseCommand):
         order = create_order(customer, lines)
         if status in (Order.Status.PAID, Order.Status.DELIVERED):
             pay_order(order, random.choice(Payment.Method.values))
+        if status == Order.Status.PAID and random.random() < 0.5:
+            # Metade das pagas já tem a entrega marcada; algumas já saíram do stand.
+            delivery = self.delivery(order, days=random.randint(1, 14))
+            if random.random() < 0.5:
+                ship_delivery(delivery)
         if status == Order.Status.DELIVERED:
-            Order.objects.filter(pk=order.pk).update(status=Order.Status.DELIVERED)
+            # Como na API: é o complete_delivery que passa a encomenda a "entregue".
+            complete_delivery(self.delivery(order, days=-random.randint(1, 10)))
         if status == Order.Status.CANCELLED:
             for item in order.items.all():  # devolve as unidades ao stock
                 Car.objects.filter(pk=item.car_id).update(stock=F("stock") + item.quantity)
             Order.objects.filter(pk=order.pk).update(status=Order.Status.CANCELLED)
         return order
+
+    def delivery(self, order, days):
+        """Agenda a entrega a `days` dias de hoje (negativo: no passado)."""
+        delivery, _ = Delivery.objects.get_or_create(
+            order=order,
+            defaults={
+                "scheduled_for": timezone.now() + timedelta(days=days),
+                "address": order.customer.address or "Rua da Demonstração, 1, Porto",
+            },
+        )
+        return delivery
+
+    def reviews(self):
+        """Avaliações de demonstração: só de viaturas compradas (encomenda paga ou entregue)."""
+        bought = (
+            OrderItem.objects.filter(order__status__in=[Order.Status.PAID, Order.Status.DELIVERED])
+            .select_related("order__customer", "car")
+            .order_by("id")
+        )
+        statuses = [Review.Status.APPROVED, Review.Status.PENDING, Review.Status.HIDDEN]
+        for i, item in enumerate(bought[:9]):
+            # get_or_create pela chave única (car, customer): correr o seed outra vez não duplica.
+            Review.objects.get_or_create(
+                car=item.car,
+                customer=item.order.customer,
+                defaults={
+                    "rating": 3 + i % 3,
+                    "comment": "Avaliação de demonstração.",
+                    "status": statuses[i % 3],
+                },
+            )
+
+    def test_drives(self):
+        """Test drives das contas de demonstração: futuros, à hora certa, em estados diferentes."""
+        start = (timezone.localtime() + timedelta(days=1)).replace(
+            hour=10, minute=0, second=0, microsecond=0
+        )
+        cars = list(Car.objects.filter(is_active=True).order_by("code")[:6])
+        steps = [  # pedido, confirmado, recusado, cancelado (pelos serviços, como na API)
+            None,
+            testdrive_services.confirm,
+            testdrive_services.decline,
+            testdrive_services.cancel,
+        ]
+        demo = Customer.objects.filter(user__username__in=DEMO_CUSTOMERS).order_by("user__username")
+        for i, customer in enumerate(demo):
+            for j in range(2):
+                n = i * 2 + j
+                car = cars[n]  # uma viatura diferente por marcação: nenhum horário em conflito
+                if TestDrive.objects.filter(customer=customer, car=car).exists():
+                    continue  # idempotente: já foi marcado numa execução anterior
+                test_drive = testdrive_services.book_test_drive(
+                    customer, car, start + timedelta(days=n, hours=n % 4)
+                )
+                if steps[n % 4]:
+                    steps[n % 4](test_drive)

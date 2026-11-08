@@ -68,6 +68,8 @@ class Car(models.Model):
 class Customer(models.Model):
     """Perfil de cliente de um utilizador: o dono das suas encomendas."""
 
+    # CASCADE: o perfil de cliente pertence a um utilizador e desaparece com a conta.
+    # Na prática, quem tem encomendas não se apaga: Order.customer é PROTECT e trava a operação.
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="customer"
     )
