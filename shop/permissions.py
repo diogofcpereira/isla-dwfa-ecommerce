@@ -3,7 +3,8 @@
 
 Papéis:
 - anónimo: só lê o catálogo (marcas e viaturas);
-- cliente: qualquer utilizador autenticado; só mexe nas suas encomendas;
+- cliente: qualquer utilizador autenticado; só vê e mexe no que é seu
+  (perfil, encomendas, linhas e pagamentos);
 - gestor: pertence ao grupo 'gestores' (criado na migração 0002); pode tudo.
 """
 
@@ -42,6 +43,20 @@ class IsOwnerOrGestor(BasePermission):
 
 class IsItemOwnerOrGestor(BasePermission):
     """Por objeto, para OrderItem: o dono é o dono da encomenda a que a linha pertence."""
+
+    def has_object_permission(self, request, view, obj):
+        return is_gestor(request.user) or obj.order.customer.user_id == request.user.id
+
+
+class IsProfileOwnerOrGestor(BasePermission):
+    """Por objeto, para Customer: cada cliente só mexe no seu próprio perfil."""
+
+    def has_object_permission(self, request, view, obj):
+        return is_gestor(request.user) or obj.user_id == request.user.id
+
+
+class IsPaymentOwnerOrGestor(BasePermission):
+    """Por objeto, para Payment: o dono é o dono da encomenda paga."""
 
     def has_object_permission(self, request, view, obj):
         return is_gestor(request.user) or obj.order.customer.user_id == request.user.id

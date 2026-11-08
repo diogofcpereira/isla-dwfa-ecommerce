@@ -4,15 +4,17 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from accounts.views import MeView, ThrottledTokenView
+from accounts.views import LogoutView, MeView, ThrottledTokenView
 from core.views import health
 from shop import views
 
 router = DefaultRouter()
 router.register("brands", views.BrandViewSet)
 router.register("cars", views.CarViewSet)
+router.register("customers", views.CustomerViewSet)
 router.register("orders", views.OrderViewSet, basename="order")
 router.register("order-items", views.OrderItemViewSet)
+router.register("payments", views.PaymentViewSet)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -23,5 +25,6 @@ urlpatterns = [
     # Autenticação (Ficha 03)
     path("api/v1/auth/token/", ThrottledTokenView.as_view(), name="token"),  # login com throttle
     path("api/v1/auth/token/refresh/", TokenRefreshView.as_view(), name="refresh"),
+    path("api/v1/auth/logout/", LogoutView.as_view(), name="logout"),  # M1: blacklist
     path("api/v1/me/", MeView.as_view(), name="me"),
 ]

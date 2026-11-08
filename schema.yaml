@@ -149,6 +149,36 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/v1/auth/logout/:
+    post:
+      operationId: v1_auth_logout_create
+      description: |-
+        POST /api/v1/auth/logout/ {"refresh": "..."} → 200.
+
+        Põe o refresh token na blacklist: a partir daí, /auth/token/refresh/ recusa-o
+        com 401. O access token ainda vale até expirar (30 min); é por isso que é curto.
+        Não exige o access token: quem tem o refresh pode sempre desistir dele.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenBlacklist'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenBlacklist'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenBlacklist'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenBlacklist'
+          description: ''
   /api/v1/auth/token/:
     post:
       operationId: v1_auth_token_create
@@ -572,6 +602,138 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/customers/:
+    get:
+      operationId: v1_customers_list
+      description: |-
+        Perfis de cliente. Não há POST nem DELETE: o perfil nasce com a primeira
+        encomenda (OrderViewSet.perform_create) e não se apaga quem já encomendou.
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCustomerList'
+          description: ''
+  /api/v1/customers/{id}/:
+    get:
+      operationId: v1_customers_retrieve
+      description: |-
+        Perfis de cliente. Não há POST nem DELETE: o perfil nasce com a primeira
+        encomenda (OrderViewSet.perform_create) e não se apaga quem já encomendou.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+    put:
+      operationId: v1_customers_update
+      description: |-
+        Perfis de cliente. Não há POST nem DELETE: o perfil nasce com a primeira
+        encomenda (OrderViewSet.perform_create) e não se apaga quem já encomendou.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Customer'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+    patch:
+      operationId: v1_customers_partial_update
+      description: |-
+        Perfis de cliente. Não há POST nem DELETE: o perfil nasce com a primeira
+        encomenda (OrderViewSet.perform_create) e não se apaga quem já encomendou.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this customer.
+        required: true
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
   /api/v1/me/:
     get:
       operationId: v1_me_retrieve
@@ -824,6 +986,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Order'
+        required: true
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -878,6 +1041,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Order'
+        required: true
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -949,6 +1113,18 @@ paths:
         required: true
       tags:
       - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pay'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Pay'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Pay'
+        required: true
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -960,7 +1136,83 @@ paths:
                 $ref: '#/components/schemas/Order'
           description: ''
         '409':
-          description: A encomenda já não está pendente.
+          description: A encomenda já não está pendente ou não tem linhas.
+  /api/v1/payments/:
+    get:
+      operationId: v1_payments_list
+      description: 'Pagamentos, só de leitura: um pagamento só se cria em POST /orders/{id}/pay/.'
+      parameters:
+      - in: query
+        name: method
+        schema:
+          type: string
+          enum:
+          - card
+          - financing
+          - mbway
+          - transfer
+        description: |-
+          * `transfer` - Transferência
+          * `financing` - Financiamento
+          * `card` - Cartão
+          * `mbway` - MB WAY
+      - in: query
+        name: order
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPaymentList'
+          description: ''
+  /api/v1/payments/{id}/:
+    get:
+      operationId: v1_payments_retrieve
+      description: 'Pagamentos, só de leitura: um pagamento só se cria em POST /orders/{id}/pay/.'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this payment.
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
 components:
   schemas:
     Brand:
@@ -1034,6 +1286,32 @@ components:
       - model
       - price
       - year
+    Customer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        phone:
+          type: string
+          maxLength: 20
+        address:
+          type: string
+      required:
+      - email
+      - id
+      - user
+      - username
     FuelEnum:
       enum:
       - petrol
@@ -1061,6 +1339,18 @@ components:
       - groups
       - id
       - username
+    MethodEnum:
+      enum:
+      - transfer
+      - financing
+      - card
+      - mbway
+      type: string
+      description: |-
+        * `transfer` - Transferência
+        * `financing` - Financiamento
+        * `card` - Cartão
+        * `mbway` - MB WAY
     Order:
       type: object
       properties:
@@ -1081,8 +1371,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/OrderItem'
-          readOnly: true
+            $ref: '#/components/schemas/OrderLine'
         total:
           type: string
           format: decimal
@@ -1122,6 +1411,33 @@ components:
       - car_name
       - id
       - order
+      - quantity
+      - unit_price
+    OrderLine:
+      type: object
+      description: 'Uma linha dentro de POST /orders/: só se envia a viatura e a quantidade.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        car:
+          type: integer
+        car_name:
+          type: string
+          readOnly: true
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+      required:
+      - car
+      - car_name
+      - id
       - quantity
       - unit_price
     PaginatedBrandList:
@@ -1170,6 +1486,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Car'
+    PaginatedCustomerList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Customer'
     PaginatedOrderItemList:
       type: object
       required:
@@ -1216,6 +1555,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Order'
+    PaginatedPaymentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Payment'
     PatchedBrand:
       type: object
       properties:
@@ -1272,6 +1634,27 @@ components:
           type: string
           format: date-time
           readOnly: true
+    PatchedCustomer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        phone:
+          type: string
+          maxLength: 20
+        address:
+          type: string
     PatchedOrder:
       type: object
       properties:
@@ -1292,8 +1675,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/OrderItem'
-          readOnly: true
+            $ref: '#/components/schemas/OrderLine'
         total:
           type: string
           format: decimal
@@ -1321,6 +1703,46 @@ components:
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
           readOnly: true
+    Pay:
+      type: object
+      description: Corpo de POST /orders/{id}/pay/.
+      properties:
+        method:
+          $ref: '#/components/schemas/MethodEnum'
+      required:
+      - method
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        order:
+          type: integer
+          readOnly: true
+        method:
+          allOf:
+          - $ref: '#/components/schemas/MethodEnum'
+          readOnly: true
+        method_display:
+          type: string
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        paid_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - id
+      - method
+      - method_display
+      - order
+      - paid_at
     StatusEnum:
       enum:
       - pending
@@ -1333,6 +1755,14 @@ components:
         * `paid` - Paga
         * `delivered` - Entregue
         * `cancelled` - Cancelada
+    TokenBlacklist:
+      type: object
+      properties:
+        refresh:
+          type: string
+          writeOnly: true
+      required:
+      - refresh
     TokenObtainPair:
       type: object
       properties:

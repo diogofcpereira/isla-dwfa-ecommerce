@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenBlacklistView, TokenObtainPairView
 
 
 class MeView(APIView):
@@ -44,3 +44,12 @@ class ThrottledTokenView(TokenObtainPairView):
 
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "auth"
+
+
+class LogoutView(TokenBlacklistView):
+    """POST /api/v1/auth/logout/ {"refresh": "..."} → 200.
+
+    Põe o refresh token na blacklist: a partir daí, /auth/token/refresh/ recusa-o
+    com 401. O access token ainda vale até expirar (30 min); é por isso que é curto.
+    Não exige o access token: quem tem o refresh pode sempre desistir dele.
+    """

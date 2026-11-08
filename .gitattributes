@@ -1,0 +1,8 @@
+# Finais de linha: no repositório, tudo em LF (o formato de Linux/macOS e do CI).
+# Quem trabalha em Windows continua a editar normalmente: o git converte ao fazer commit.
+* text=auto eol=lf
+
+# Ficheiros binários: nunca converter.
+*.png binary
+*.jpg binary
+*.pdf binary

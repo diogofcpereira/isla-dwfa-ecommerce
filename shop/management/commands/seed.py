@@ -1,12 +1,17 @@
 import random
 from decimal import Decimal
 
+from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.db.models import F
 from django.utils.text import slugify
 
-from shop.factories import BrandFactory, CarFactory, CustomerFactory, OrderFactory, OrderItemFactory
-from shop.models import Brand, Car, Customer, Order
+from accounts.factories import UserFactory
+from shop.factories import BrandFactory, CarFactory, CustomerFactory
+from shop.models import Brand, Car, Customer, Order, Payment
+from shop.permissions import GESTORES
+from shop.services import create_order, pay_order
 
 # Catálogo de demonstração do DriveNow: (marca, modelo, versão, combustível, preço base).
 CATALOGUE = [
@@ -32,16 +37,46 @@ CATALOGUE = [
     ("Dacia", "Sandero", "1.0 TCe Expression", Car.Fuel.PETROL, "16200"),
 ]
 
+# Contas de demonstração (também no README). Só para dev: o seed nunca corre em produção.
+DEMO_PASSWORD = "drivenow-demo-2026"
+DEMO_GESTOR = "gestor"
+DEMO_CUSTOMERS = ["ana", "bruno", "carla"]
+STATES = [Order.Status.PENDING, Order.Status.PAID, Order.Status.DELIVERED, Order.Status.CANCELLED]
+
 
 class Command(BaseCommand):
     help = "Preenche a BD com dados de demonstração do DriveNow. Pode correr várias vezes."
 
     def add_arguments(self, parser):
-        parser.add_argument("--customers", type=int, default=40)
-        parser.add_argument("--orders", type=int, default=150)
+        parser.add_argument("--customers", type=int, default=10)
+        parser.add_argument("--orders", type=int, default=30)
 
     @transaction.atomic
     def handle(self, *args, **opts):
+        self.catalogue()
+        self.demo_accounts()
+
+        # Idempotente: só cria o que falta para chegar aos totais pedidos.
+        missing = opts["customers"] - Customer.objects.count()
+        CustomerFactory.create_batch(max(missing, 0))
+        customers = list(Customer.objects.all())
+        missing = opts["orders"] - Order.objects.count()
+        for _ in range(max(missing, 0)):
+            self.order(random.choice(customers), random.choice(STATES))
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"{Brand.objects.count()} marcas, "
+                f"{Car.objects.count()} viaturas, "
+                f"{Customer.objects.count()} clientes, "
+                f"{Order.objects.count()} encomendas, "
+                f"{Payment.objects.count()} pagamentos. "
+                f"Contas: {DEMO_GESTOR} (gestor) e {', '.join(DEMO_CUSTOMERS)} (clientes), "
+                f"password {DEMO_PASSWORD}"
+            )
+        )
+
+    def catalogue(self):
         # Catálogo fixo: get_or_create pelo slug/código, por isso correr de novo não duplica.
         for i, (brand_name, model, version, fuel, price) in enumerate(CATALOGUE, start=1):
             brand = BrandFactory(name=brand_name, slug=slugify(brand_name))
@@ -53,26 +88,37 @@ class Command(BaseCommand):
                 fuel=fuel,
                 year=2024 + i % 3,  # 2024, 2025 ou 2026
                 price=Decimal(price),
-                stock=3 + i % 6,
+                stock=10 + i % 6 * 2,  # 10 a 20 unidades
             )
-        cars = list(Car.objects.select_related("brand"))
+        # Uma viatura retirada de venda, para se ver o is_active=False no catálogo.
+        Car.objects.filter(code="DN-0020").update(is_active=False)
 
-        # Idempotente: só cria o que falta para chegar aos totais pedidos.
-        missing = opts["customers"] - Customer.objects.count()
-        CustomerFactory.create_batch(max(missing, 0))
-        customers = list(Customer.objects.all())
+    def demo_accounts(self):
+        gestor = UserFactory(username=DEMO_GESTOR, password=DEMO_PASSWORD)
+        gestor.groups.add(Group.objects.get(name=GESTORES))  # o grupo vem da migração 0002
+        for username in DEMO_CUSTOMERS:
+            user = UserFactory(username=username, password=DEMO_PASSWORD)
+            customer = CustomerFactory(user=user)
+            if not customer.orders.exists():
+                for status in STATES:  # uma encomenda em cada estado
+                    self.order(customer, status)
 
-        missing = opts["orders"] - Order.objects.count()
-        for _ in range(max(missing, 0)):
-            order = OrderFactory(customer=random.choice(customers))
-            for car in random.sample(cars, k=random.randint(1, 3)):
-                OrderItemFactory(order=order, car=car, quantity=random.randint(1, 2))
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"{Brand.objects.count()} marcas, "
-                f"{Car.objects.count()} viaturas, "
-                f"{Customer.objects.count()} clientes, "
-                f"{Order.objects.count()} encomendas."
-            )
-        )
+    def order(self, customer, status):
+        """Cria uma encomenda pelos mesmos serviços da API e leva-a até `status`."""
+        cars = list(Car.objects.filter(is_active=True, stock__gte=2))
+        lines = [
+            {"car": car, "quantity": random.randint(1, 2)}
+            for car in random.sample(cars, k=min(len(cars), random.randint(1, 2)))
+        ]
+        if not lines:
+            return None  # stock esgotado: não inventa encomendas impossíveis
+        order = create_order(customer, lines)
+        if status in (Order.Status.PAID, Order.Status.DELIVERED):
+            pay_order(order, random.choice(Payment.Method.values))
+        if status == Order.Status.DELIVERED:
+            Order.objects.filter(pk=order.pk).update(status=Order.Status.DELIVERED)
+        if status == Order.Status.CANCELLED:
+            for item in order.items.all():  # devolve as unidades ao stock
+                Car.objects.filter(pk=item.car_id).update(stock=F("stock") + item.quantity)
+            Order.objects.filter(pk=order.pk).update(status=Order.Status.CANCELLED)
+        return order
