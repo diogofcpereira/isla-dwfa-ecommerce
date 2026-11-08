@@ -1,10 +1,13 @@
+from django.db import IntegrityError, transaction
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from shop.permissions import IsGestorOrReadOnly, is_gestor
+from shop.services import Conflict
 
 from .models import Delivery
 from .permissions import IsDeliveryOwnerOrGestor
@@ -44,6 +47,20 @@ class DeliveryViewSet(
             return qs
         # O cliente só vê as entregas das suas encomendas; as outras dão 404.
         return qs.filter(order__customer__user_id=self.request.user.id)
+
+    def perform_create(self, serializer):
+        try:
+            with transaction.atomic():
+                serializer.save()
+        except IntegrityError:
+            # Dois pedidos ao mesmo tempo para a mesma encomenda: a OneToOne apanha o segundo.
+            raise ValidationError({"order": "Esta encomenda já tem uma entrega."}) from None
+
+    def perform_update(self, serializer):
+        # Uma entrega concluída é um registo do que aconteceu: a data e a morada já não mudam.
+        if serializer.instance.status == Delivery.Status.DELIVERED:
+            raise Conflict("A entrega já foi concluída e não pode ser alterada.")
+        serializer.save()
 
     @extend_schema(request=None, responses=STATE_CHANGE)
     @action(detail=True, methods=["post"])

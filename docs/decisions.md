@@ -249,7 +249,7 @@ Um recurso por membro, cada um na sua app Django (`deliveries`, `reviews`, `test
 ### Delivery — entrega da viatura (Diogo)
 
 19. **Só encomendas pagas, uma entrega por encomenda:** `Delivery.order` é um `OneToOneField` com `PROTECT`, e o `validate_order` recusa encomendas que não estejam pagas (400). Rejeitado: uma FK com várias entregas por encomenda, que complicava saber quando a encomenda fica entregue.
-20. **O estado só muda por ações:** `POST /deliveries/{id}/ship/` (agendada → em trânsito) e `/complete/` (→ entregue) são serviços com `select_for_update`, e repetir dá 409. O `complete` passa a encomenda a `delivered` na mesma transação. Rejeitado: `PATCH {"status": ...}`, que deixava saltar estados e esquecer a encomenda.
+20. **O estado só muda por ações:** `POST /deliveries/{id}/ship/` (agendada → em trânsito) e `/complete/` (→ entregue) são serviços com `select_for_update`, e repetir dá 409. O `complete` passa a encomenda a `delivered` na mesma transação. Rejeitado: `PATCH {"status": ...}`, que deixava saltar estados e esquecer a encomenda. Uma entrega concluída já não se altera (409), porque é o registo do que aconteceu; e dois pedidos simultâneos para a mesma encomenda dão 400, e não 500, porque o `IntegrityError` da `OneToOneField` é convertido num erro de validação.
 21. **`ck_delivery_delivered_at_matches_status`:** a base de dados garante que só uma entrega concluída tem `delivered_at`, e que todas as concluídas o têm.
 22. **Leitura para o cliente, escrita para o gestor:** `IsAuthenticated` + `IsGestorOrReadOnly` + `IsDeliveryOwnerOrGestor`, com o filtro no `get_queryset` (404 nas entregas de outros). Não há DELETE: a entrega fica no histórico da encomenda.
 
@@ -258,6 +258,7 @@ Um recurso por membro, cada um na sua app Django (`deliveries`, `reviews`, `test
 | `GET /deliveries/` | 401 | 200, só as das suas encomendas | 200, todas | filtro no `get_queryset` |
 | `GET /deliveries/{id}/` (de outro) | 401 | 404 | 200 | filtro → 404 |
 | `POST/PATCH /deliveries/` | 401 | 403 | 201/200; 400 se a encomenda não estiver paga ou já tiver entrega | `IsGestorOrReadOnly` + `validate_order` |
+| `PATCH /deliveries/{id}/` (concluída) | 401 | 403 | 409 | `perform_update` |
 | `POST /deliveries/{id}/ship/`, `/complete/` | 401 | 403 | 200; 409 se repetido | `IsGestorOrReadOnly` + serviços |
 
 ### Review — avaliação da viatura (Filipe)
