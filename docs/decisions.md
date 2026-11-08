@@ -197,23 +197,23 @@ Cada linha está testada em `shop/tests/test_auth.py` (por papel) ou nos testes 
 
 ## M1 — Recursos individuais
 
-Cada membro acrescenta aqui as decisões do seu recurso (uma linha cada) e, na tabela acima, as linhas do seu recurso.
+Um recurso por membro, cada um na sua app Django (`deliveries`, `reviews`, `testdrives`), para cada app ter as suas migrações e não haver conflitos no `shop`. Cada subsecção tem as decisões do recurso e as suas linhas da matriz endpoint × papel, testadas em `<app>/tests/`.
 
-1. Delivery — entrega da viatura (Diogo)
-Só encomendas pagas, uma entrega por encomenda: Delivery.order é um OneToOneField com PROTECT, e o validate_order recusa encomendas que não estejam pagas (400). Rejeitado: uma FK com várias entregas por encomenda, que complicava saber quando a encomenda fica entregue.
-O estado só muda por ações: POST /deliveries/{id}/ship/ (agendada → em trânsito) e /complete/ (→ entregue) são serviços com select_for_update, e repetir dá 409. O complete passa a encomenda a delivered na mesma transação. Rejeitado: PATCH {"status": ...}, que deixava saltar estados e esquecer a encomenda.
-ck_delivery_delivered_at_matches_status: a base de dados garante que só uma entrega concluída tem delivered_at, e que todas as concluídas o têm.
-Leitura para o cliente, escrita para o gestor: IsAuthenticated + IsGestorOrReadOnly + IsDeliveryOwnerOrGestor, com o filtro no get_queryset (404 nas entregas de outros). Não há DELETE: a entrega fica no histórico da encomenda.
+### Delivery — entrega da viatura (Diogo)
 
+19. **Só encomendas pagas, uma entrega por encomenda:** `Delivery.order` é um `OneToOneField` com `PROTECT`, e o `validate_order` recusa encomendas que não estejam pagas (400). Rejeitado: uma FK com várias entregas por encomenda, que complicava saber quando a encomenda fica entregue.
+20. **O estado só muda por ações:** `POST /deliveries/{id}/ship/` (agendada → em trânsito) e `/complete/` (→ entregue) são serviços com `select_for_update`, e repetir dá 409. O `complete` passa a encomenda a `delivered` na mesma transação. Rejeitado: `PATCH {"status": ...}`, que deixava saltar estados e esquecer a encomenda.
+21. **`ck_delivery_delivered_at_matches_status`:** a base de dados garante que só uma entrega concluída tem `delivered_at`, e que todas as concluídas o têm.
+22. **Leitura para o cliente, escrita para o gestor:** `IsAuthenticated` + `IsGestorOrReadOnly` + `IsDeliveryOwnerOrGestor`, com o filtro no `get_queryset` (404 nas entregas de outros). Não há DELETE: a entrega fica no histórico da encomenda.
 
-Endpoint	                                         anónimo	cliente	                            gestor	                                                            Mecanismo
-GET /deliveries/	                                  401	    200, só as das suas encomendas	    200, todas	                                                        filtro no get_queryset
-GET /deliveries/{id}/ (de outro)	                  401	    404	                                200	filtro → 404
-POST/PATCH /deliveries/	                              401	    403	                                201/200; 400 se a encomenda não estiver paga ou já tiver entrega	    IsGestorOrReadOnly + validate_order
-POST /deliveries/{id}/ship/, /complete/	              401	    403	                                200; 409 se repetido	                                IsGestorOrReadOnly + serviços
+| Endpoint | anónimo | cliente | gestor | Mecanismo |
+|---|---|---|---|---|
+| `GET /deliveries/` | 401 | 200, só as das suas encomendas | 200, todas | filtro no `get_queryset` |
+| `GET /deliveries/{id}/` (de outro) | 401 | 404 | 200 | filtro → 404 |
+| `POST/PATCH /deliveries/` | 401 | 403 | 201/200; 400 se a encomenda não estiver paga ou já tiver entrega | `IsGestorOrReadOnly` + `validate_order` |
+| `POST /deliveries/{id}/ship/`, `/complete/` | 401 | 403 | 200; 409 se repetido | `IsGestorOrReadOnly` + serviços |
 
-
-2. Review — avaliação da viatura (Filipe)
+### Review — avaliação da viatura (Filipe)
 
 23. **Só avalia quem comprou:** o `ReviewSerializer.validate` procura uma linha dessa viatura numa encomenda paga ou entregue do cliente; sem compra, 400. Rejeitado: deixar qualquer cliente avaliar, que abria a porta a avaliações falsas.
 24. **Uma avaliação por cliente e viatura:** `uq_review_car_customer` na base de dados e a mesma verificação no serializer, para responder 400 em vez de rebentar com um `IntegrityError`. A nota vai de 1 a 5 (`ck_review_rating_1_5`).
@@ -227,3 +227,18 @@ POST /deliveries/{id}/ship/, /complete/	              401	    403	              
 | `PATCH/DELETE /reviews/{id}/` (sua) | 401 | 200 (volta a pendente) / 204 | 200/204 | `IsReviewAuthorOrGestor` |
 | `PATCH/DELETE /reviews/{id}/` (aprovada, de outro) | 401 | 403 | 200/204 | `IsReviewAuthorOrGestor` |
 | `POST /reviews/{id}/moderate/` | 401 | 403 | 200 | `IsGestor` |
+
+### TestDrive — marcação de test drive (Rúben)
+
+27. **Horários de hora a hora, um por viatura:** o `validate_scheduled_for` exige uma data no futuro e à hora certa (hh:00), e a `uq_testdrive_car_slot_active` é uma `UniqueConstraint` condicional, só para pedidos e confirmados: cancelar ou recusar liberta o horário. Rejeitado: uma `UniqueConstraint` simples, que deixava o horário ocupado para sempre.
+28. **Dois clientes ao mesmo tempo:** o serializer dá 400 no caso normal; se dois pedidos passarem juntos, a constraint apanha o segundo e o `book_test_drive` responde 409 em vez de 500.
+29. **O estado só muda por ações:** confirmar e recusar (só o gestor, `IsGestor`) a partir de um pedido; cancelar (o dono ou o gestor) a partir de um pedido ou de um confirmado; o resto dá 409. Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+30. **Cada um vê os seus:** filtro no `get_queryset` + `IsTestDriveOwnerOrGestor`, por isso as marcações de outros dão 404.
+
+| Endpoint | anónimo | cliente | gestor | Mecanismo |
+|---|---|---|---|---|
+| `GET /test-drives/` | 401 | 200, só os seus | 200, todos | filtro no `get_queryset` |
+| `POST /test-drives/` | 401 | 201; 400 no passado, fora da hora certa, viatura retirada ou horário ocupado | 201 | `validate` + `uq_testdrive_car_slot_active` |
+| `POST /test-drives/{id}/confirm/`, `/decline/` | 401 | 403 | 200; 409 se já não estiver pedido | `IsGestor` + serviços |
+| `POST /test-drives/{id}/cancel/` | 401 | 200 (seu) / 404 (de outro); 409 se já não estiver ativo | 200 | filtro + `IsTestDriveOwnerOrGestor` |
+
