@@ -63,7 +63,7 @@ Lista de encomendas: 4 queries (eram 3 na Ficha 02) — a quarta é a verificaç
 em is_gestor(); não cresce com o número de encomendas.
 
 **Matriz endpoint × papel**
-
+```text
 Endpoint	                                  anónimo	cliente	                      gestor	              Mecanismo
 GET /categories/	                            200	      200	                        200	                  AllowAny
 GET /products/	                                200	      200	                        200	                  IsGestorOrReadOnly (leitura aberta)
@@ -80,7 +80,7 @@ GET /order-items/	                            401	      200, só das suas encome
 POST /order-items/ (encomenda sua)	            401	      201	                        201                   validate_order
 POST /order-items/ (encomenda de outro)	        401	      400	                        201	                  validate_order
 GET /me/	                                    401	      200	                        200	                  IsAuthenticated
-
+```
 
 ## Parte 3
 
@@ -266,7 +266,7 @@ Um recurso por membro, cada um na sua app Django (`deliveries`, `reviews`, `test
 23. **Só avalia quem comprou:** o `ReviewSerializer.validate` procura uma linha dessa viatura numa encomenda paga ou entregue do cliente; sem compra, 400. Rejeitado: deixar qualquer cliente avaliar, que abria a porta a avaliações falsas.
 24. **Uma avaliação por cliente e viatura:** `uq_review_car_customer` na base de dados e a mesma verificação no serializer, para responder 400 em vez de rebentar com um `IntegrityError`. A nota vai de 1 a 5 (`ck_review_rating_1_5`).
 25. **Moderação:** as avaliações nascem pendentes e só o gestor as aprova ou oculta (`POST /reviews/{id}/moderate/`, `IsGestor`); uma avaliação editada volta a pendente. O público vê só as aprovadas; o cliente vê também as suas.
-26. **Leitur26. **Leitura pública, escrita do autor:** `IsAuthenticatedOrReadOnly` + `IsReviewAuthorOrGestor`. Numa avaliação aprovada de outro, o cliente leva 403 (ela é pública); numa pendente de outro, 404 (nem a vê).a pública, escrita do autor:** `IsAuthenticatedOrReadOnly` + `IsReviewAuthorOrGestor`. Numa avaliação aprovada de outro, o cliente leva 403 (ela é pública); numa pendente de outro, 404 (nem a vê).
+26. **Leitura pública, escrita do autor:** `IsAuthenticatedOrReadOnly` + `IsReviewAuthorOrGestor`. Numa avaliação aprovada de outro, o cliente leva 403 (ela é pública); numa pendente de outro, 404 (nem a vê).
 
 | Endpoint | anónimo | cliente | gestor | Mecanismo |
 |---|---|---|---|---|
