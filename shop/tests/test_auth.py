@@ -1,7 +1,7 @@
 # shop/tests/test_auth.py
 """Testes de autenticação e autorização (Ficha 03).
 
-Cada teste verifica uma ou mais linhas da matriz endpoint × papel do docs/decisions.md.
+Cada teste verifica uma ou mais linhas da matriz endpoint x papel do docs/decisions.md.
 401 = quem és? · 403 = podes? · 404 = existe para ti?
 """
 
@@ -267,3 +267,20 @@ def test_delete_other_customers_pending_order_by_role(actors, role, expected):
     other = OrderFactory()  # pendente, de outro cliente
     r = as_(actors[role]).delete(f"/api/v1/orders/{other.id}/")
     assert r.status_code == expected
+
+
+@pytest.mark.parametrize(
+    "role,expected_status,expected_count",
+    [
+        ("anon", 401, None),
+        ("customer", 200, 1),  # só as linhas das suas encomendas
+        ("gestor", 200, 2),  # todas
+    ],
+)
+def test_list_order_items_by_role(actors, role, expected_status, expected_count):
+    OrderItemFactory(order__customer__user=actors["customer"])  # a linha do cliente
+    OrderItemFactory()  # uma linha de outra pessoa
+    r = as_(actors[role]).get("/api/v1/order-items/")
+    assert r.status_code == expected_status
+    if expected_count is not None:
+        assert len(items(r)) == expected_count
