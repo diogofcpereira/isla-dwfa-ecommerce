@@ -146,7 +146,6 @@ class Command(BaseCommand):
         )
         return delivery
 
-
     def reviews(self):
         """Avaliações de demonstração: só de viaturas compradas (encomenda paga ou entregue)."""
         bought = (
