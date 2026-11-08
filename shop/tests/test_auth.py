@@ -1,4 +1,9 @@
 # shop/tests/test_auth.py
+"""Testes de autenticação e autorização (Ficha 03).
+
+Cada teste verifica uma ou mais linhas da matriz endpoint × papel do docs/decisions.md.
+401 = quem és? · 403 = podes? · 404 = existe para ti?
+"""
 
 import pytest
 from django.contrib.auth.models import Group
@@ -11,6 +16,7 @@ from shop.factories import (
     CustomerFactory,
     OrderFactory,
     OrderItemFactory,
+    PaymentFactory,
 )
 from shop.models import Order
 
@@ -72,6 +78,21 @@ def test_refresh_token_cannot_be_reused():
     again = api.post("/api/v1/auth/token/refresh/", {"refresh": pair["refresh"]}, format="json")
     assert again.status_code == 401  # o antigo está na blacklist
     assert again.json()["code"] == "token_not_valid"
+
+
+@pytest.mark.django_db
+def test_logout_blacklists_the_refresh_token():
+    UserFactory(username="ana", password="pass1234")
+    api = APIClient()
+    pair = api.post(
+        "/api/v1/auth/token/", {"username": "ana", "password": "pass1234"}, format="json"
+    ).json()
+
+    out = api.post("/api/v1/auth/logout/", {"refresh": pair["refresh"]}, format="json")
+    assert out.status_code == 200
+
+    again = api.post("/api/v1/auth/token/refresh/", {"refresh": pair["refresh"]}, format="json")
+    assert again.status_code == 401  # depois do logout, o refresh já não serve
 
 
 @pytest.mark.parametrize("role,expected", [("anon", 401), ("customer", 200), ("gestor", 200)])
@@ -188,3 +209,61 @@ def test_customer_only_sees_items_of_own_orders(actors):
     r = as_(actors["customer"]).get("/api/v1/order-items/")
     assert r.status_code == 200
     assert [i["id"] for i in items(r)] == [mine.id]
+
+
+# ---------- M1: perfis de cliente e pagamentos por papel ----------
+
+
+@pytest.mark.parametrize(
+    "role,expected_status,expected_count",
+    [
+        ("anon", 401, None),
+        ("customer", 200, 1),  # só o seu perfil
+        ("gestor", 200, 2),  # todos
+    ],
+)
+def test_list_customers_by_role(actors, role, expected_status, expected_count):
+    CustomerFactory(user=actors["customer"])
+    CustomerFactory()  # outro cliente
+    r = as_(actors[role]).get("/api/v1/customers/")
+    assert r.status_code == expected_status
+    if expected_count is not None:
+        assert len(items(r)) == expected_count
+
+
+@pytest.mark.parametrize("role,expected", [("anon", 401), ("customer", 404), ("gestor", 200)])
+def test_other_customers_profile_by_role(actors, role, expected):
+    other = CustomerFactory()
+    r = as_(actors[role]).get(f"/api/v1/customers/{other.id}/")
+    assert r.status_code == expected
+
+
+@pytest.mark.parametrize(
+    "role,expected_status,expected_count",
+    [
+        ("anon", 401, None),
+        ("customer", 200, 1),  # só o pagamento das suas encomendas
+        ("gestor", 200, 2),  # todos
+    ],
+)
+def test_list_payments_by_role(actors, role, expected_status, expected_count):
+    PaymentFactory(order__customer__user=actors["customer"])
+    PaymentFactory()  # pagamento de outro cliente
+    r = as_(actors[role]).get("/api/v1/payments/")
+    assert r.status_code == expected_status
+    if expected_count is not None:
+        assert len(items(r)) == expected_count
+
+
+@pytest.mark.parametrize("role,expected", [("anon", 401), ("customer", 404), ("gestor", 200)])
+def test_other_customers_payment_by_role(actors, role, expected):
+    other = PaymentFactory()
+    r = as_(actors[role]).get(f"/api/v1/payments/{other.id}/")
+    assert r.status_code == expected
+
+
+@pytest.mark.parametrize("role,expected", [("anon", 401), ("customer", 404), ("gestor", 204)])
+def test_delete_other_customers_pending_order_by_role(actors, role, expected):
+    other = OrderFactory()  # pendente, de outro cliente
+    r = as_(actors[role]).delete(f"/api/v1/orders/{other.id}/")
+    assert r.status_code == expected

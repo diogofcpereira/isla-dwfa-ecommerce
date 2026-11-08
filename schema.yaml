@@ -149,6 +149,36 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/v1/auth/logout/:
+    post:
+      operationId: v1_auth_logout_create
+      description: |-
+        POST /api/v1/auth/logout/ {"refresh": "..."} → 200.
+
+        Põe o refresh token na blacklist: a partir daí, /auth/token/refresh/ recusa-o
+        com 401. O access token ainda vale até expirar (30 min); é por isso que é curto.
+        Não exige o access token: quem tem o refresh pode sempre desistir dele.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenBlacklist'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenBlacklist'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenBlacklist'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenBlacklist'
+          description: ''
   /api/v1/auth/token/:
     post:
       operationId: v1_auth_token_create
@@ -1725,6 +1755,14 @@ components:
         * `paid` - Paga
         * `delivered` - Entregue
         * `cancelled` - Cancelada
+    TokenBlacklist:
+      type: object
+      properties:
+        refresh:
+          type: string
+          writeOnly: true
+      required:
+      - refresh
     TokenObtainPair:
       type: object
       properties:
