@@ -30,7 +30,8 @@ INSTALLED_APPS = [
     "accounts",
     "core",
     "shop",
-    "deliveries",  # M1 · recurso do Diogo
+    "deliveries",  # M1 · recurso Diogo
+    "reviews",  # M1 - recurso Filipe
     # bibliotecas · third-party
     "corsheaders",  # Ficha 03 · Parte 3: CORS
     "rest_framework",
