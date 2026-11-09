@@ -128,3 +128,76 @@ Conclusão: o IsOwnerOrGestor sozinho ainda impede ver o detalhe e pagar a encom
 outro, mas responde 403, o que confirma que ela existe, e deixa a lista aberta. São precisas
 as duas camadas: o filtro (404 e lista fechada) e a permissão por objeto (defesa extra). O
 filtro foi reposto.
+
+## Ficha 04 — Frontend (SPA Vue)
+
+### Parte 1
+
+1. **`frontend/` no mesmo repositório da API** — SPA e API mudam juntas (um tipo do frontend
+   acompanha o serializer no mesmo commit) e o M2 entrega SPA, CI e Docker num só repositório.
+   Rejeitado: um repositório só para o frontend — duas tags e dois PRs para cada mudança de
+   contrato.
+
+2. **CORS em vez do proxy do Vite** — a SPA (`localhost:5173`) chama a API (`localhost:8000`)
+   diretamente; a API responde `Access-Control-Allow-Origin` porque a origem está em
+   `CORS_ALLOWED_ORIGINS` (Ficha 03). É o mesmo mecanismo que em produção, por isso um erro de
+   configuração aparece já em desenvolvimento. Rejeitado: `server.proxy` no `vite.config.ts` —
+   só existe no servidor de dev e esconderia um CORS mal configurado até ao M2.
+
+3. **O URL é o estado da lista** — pesquisa e página vivem em `?search=` e `?page=`
+   (`computed` com `get`/`set` sobre `route.query`): recarregar mantém-nas, o link partilha-se e o
+   Retroceder funciona. `router.replace` para a pesquisa, `router.push` para mudar de página.
+   Rejeitado: `ref`s locais — perdiam-se no F5.
+
+4. **Rotas *lazy*** — o detalhe, o login e as encomendas são `() => import(...)`: cada uma é um
+   chunk à parte, descarregado só quando se abre; a lista, que é o primeiro ecrã, vai no bundle
+   principal.
+
+5. **Detalhe sem `attributes`** — o `Product` não tem JSONB, por isso o `<dl>` do detalhe mostra
+   os campos do produto com o mesmo `v-for` sobre um objeto.
+
+### Parte 2
+
+6. **Onde vivem os tokens** — o access (30 min) só em memória, num `ref` da store; o refresh
+   (1 dia, rodado a cada uso e posto na blacklist) no `localStorage`, para o F5 não obrigar a novo
+   login. Um XSS que leia o storage só encontra o refresh, de vida curta e de uso único.
+   Rejeitados: cookie `HttpOnly` — a API passaria a emitir cookies e a precisar de CSRF outra vez
+   (e de CORS com credenciais); `sessionStorage` — um login por separador; refresh só em memória —
+   login a cada F5.
+
+7. **Como se renova** — um middleware do `openapi-fetch` põe `Authorization: Bearer` em todos os
+   pedidos; num 401 chama `refreshAccess()` **uma vez** e repete o pedido com um `fetch` simples
+   (um segundo 401 é a sério). Se a renovação falhar: `logout()` e o `App.vue` manda para
+   `/login?next=`. Duas renovações em paralelo partilham a mesma promise (senão a segunda gastava um
+   refresh já na blacklist), e o refresh é lido do `localStorage` (outro separador pode já o ter
+   rodado). No arranque, `bootstrap()` renova e carrega `/me/` antes de montar a app.
+
+8. **Tipos gerados do OpenAPI** — `openapi-typescript` gera `src/api/schema.d.ts` do `schema.yaml`
+   e o `openapi-fetch` verifica URLs, parâmetros e corpos na compilação (`query: { foo: 1 }` não
+   compila); `src/types.ts` ficou só com aliases. `COMPONENT_SPLIT_REQUEST: True` na API separa o
+   pedido da resposta. O esquema foi corrigido onde mentia: `total` com `allow_null=True` (uma
+   encomenda sem linhas). O `stock?` de `Product` (default no modelo) não foi estreitado — exigiria
+   um `as` em cada vista; quem o usa faz `stock ?? 0`. O `openapi-typescript` 7 pede TypeScript 5:
+   um `overrides` no `package.json` fá-lo usar o TypeScript 6 do projeto. Rejeitado: manter os tipos
+   à mão — divergem do serializer sem ninguém dar por isso.
+
+9. **O guard protege o ecrã, não os dados** — `meta.requiresAuth` + `beforeEach` (≈
+   `@login_required` com `?next=`); a autorização continua na API (401/403/404 da Ficha 03). O
+   `?next=` só aceita caminhos internos (começa por `/` e não por `//`), para não haver *open
+   redirect*.
+
+10. **Erros onde o utilizador está a olhar** — `ApiError.field()` lê os erros por campo no formato
+    do DRF (`{"quantity": [...]}`, o desta API) e no de Problem Details (`errors.quantity`). 400 →
+    debaixo da linha do formulário; 401/429 no login → frases próprias; 409 ao pagar → mensagem por
+    cima da lista, que recarrega; rede/5xx → estado de erro com "Tentar outra vez".
+
+11. **Nova encomenda sem escrita aninhada** — `POST /orders/` (sem corpo: o servidor decide
+    `customer` e `status`) e um `POST /order-items/` por linha. Se uma linha falhar, a encomenda e
+    as linhas já gravadas ficam; ao reenviar reutiliza-se a mesma encomenda e só se enviam as
+    linhas em falta. O total no formulário é uma estimativa (em cêntimos inteiros); o que conta é o
+    `total` da API, somado em `Decimal`.
+
+12. **Testes sem rede** — 12 testes Vitest com `fetch` substituído (`vi.stubGlobal`): store
+    (o refresh vai para o `localStorage`, o access não), middleware (401 → refresh → repetição com
+    o Bearer novo; refresh falhado → logout sem loop), `LoginView` (401 → mensagem, sem navegar),
+    `OrderStatusBadge` (`it.each` pelos quatro estados) e `ProductCard`.

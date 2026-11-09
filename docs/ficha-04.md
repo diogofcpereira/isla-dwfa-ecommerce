@@ -1,0 +1,5 @@
+# Ficha 04 — Perguntas de reflexão
+
+1. **Sem o guard:** o ecrã `/orders` abre, mas o pedido à API sai sem token e recebe 401 (o mesmo com `curl` sem token); com um token válido, só vêm as encomendas do próprio, e a de outro dá 404. O que protege os dados é a API: `IsAuthenticated`, o `get_queryset` filtrado pelo dono e o `IsOwnerOrGestor` (Ficha 03). O guard existe pela experiência: evita mostrar um ecrã que só ia falhar e leva ao login com `?next=` para voltar ao sítio certo.
+
+2. **`price` como string:** o DRF serializa `DecimalField` como texto porque um número JSON é, na prática, um float binário (IEEE 754), que não representa 9.90 exatamente; a string preserva o valor do `Decimal`. Convertido para `number`, somar dá erros de arredondamento (0.1 + 0.2 = 0.30000000000000004) que se acumulam e fazem o total diferir do servidor. A aritmética de dinheiro vive no servidor, em `Decimal` (o `total` é um `Sum` no SQL); o frontend só mostra — o total do formulário é uma estimativa, em cêntimos inteiros.
