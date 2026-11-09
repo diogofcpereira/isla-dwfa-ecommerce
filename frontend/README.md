@@ -66,7 +66,7 @@ raiz) e `npm run gen:api` (aqui). Um campo renomeado aparece como erro no `type-
 | `src/views/NotFoundView.vue` | Página para URLs desconhecidos |
 | `src/components/ProductCard.vue` | Cartão de produto com props e emits tipados |
 | `src/components/OrderStatusBadge.vue` | Estado da encomenda com `switch` exaustivo (`satisfies never`) |
-| `src/**/__tests__/` | 12 testes Vitest, sem rede (`fetch` substituído) |
+| `src/**/__tests__/` | 13 testes Vitest, sem rede (`fetch` substituído) |
 
 ## Ambiente
 

@@ -2,7 +2,7 @@
 // Decisão (Aula 04 / Ficha 03): o access (30 min) só em memória; o refresh (1 dia,
 // roda a cada uso e vai para a blacklist) no localStorage, para sobreviver ao F5.
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { api, unwrap } from '@/api/client'
 import type { Me } from '@/types'
@@ -16,6 +16,13 @@ export const useAuth = defineStore('auth', () => {
   const user = ref<Me | null>(null)
   const ready = ref(false) // o bootstrap já correu?
 
+  // Uma cópia NÃO reativa do access, para o middleware. Se o middleware lesse access.value,
+  // o watchEffect do useFetch (que está a correr quando o pedido sai) ficava a depender do
+  // token, e cada renovação ou logout repetia os pedidos de todas as listas no ecrã.
+  // flush: 'sync' → a cópia muda no mesmo instante que o ref (também nos testes).
+  let currentAccess: string | null = null
+  watch(access, (value) => (currentAccess = value), { flush: 'sync' })
+
   // ---- getters ----
   const isLoggedIn = computed(() => user.value !== null)
   const isGestor = computed(() => user.value?.groups.includes('gestores') ?? false)
@@ -25,6 +32,11 @@ export const useAuth = defineStore('auth', () => {
     refresh.value = value
     if (value) localStorage.setItem(REFRESH_KEY, value)
     else localStorage.removeItem(REFRESH_KEY)
+  }
+
+  /** O access para pôr no cabeçalho, lido sem criar dependências reativas. */
+  function accessToken(): string | null {
+    return currentAccess
   }
 
   // ---- ações ----
@@ -103,5 +115,6 @@ export const useAuth = defineStore('auth', () => {
     logout,
     refreshAccess,
     bootstrap,
+    accessToken,
   }
 })

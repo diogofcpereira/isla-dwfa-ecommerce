@@ -15,8 +15,9 @@ const copies = new Map<string, Request>()
 export const authMiddleware: Middleware = {
   onRequest({ request, schemaPath, id }) {
     if (SKIP.includes(schemaPath)) return request
-    const auth = useAuth()
-    if (auth.access) request.headers.set('Authorization', `Bearer ${auth.access}`)
+    // accessToken() e não auth.access: ler o ref aqui fazia o useFetch depender do token.
+    const token = useAuth().accessToken()
+    if (token) request.headers.set('Authorization', `Bearer ${token}`)
     copies.set(id, request.clone())
     return request
   },

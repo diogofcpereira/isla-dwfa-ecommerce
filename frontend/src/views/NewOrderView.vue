@@ -106,8 +106,16 @@ async function submit() {
       >
         <select v-model="line.product" required :disabled="line.saved" aria-label="Produto">
           <option :value="null" disabled>Escolhe um produto…</option>
-          <option v-for="p in catalogue?.results ?? []" :key="p.id" :value="p.id">
-            {{ p.name }} — {{ p.price }} € ({{ p.stock ?? 0 }} em stock)
+          <!-- Esgotados ficam visíveis mas não se podem escolher. O stock a sério continua a
+               ser verificado pela API (pode esgotar entre carregar a página e enviar). -->
+          <option
+            v-for="p in catalogue?.results ?? []"
+            :key="p.id"
+            :value="p.id"
+            :disabled="(p.stock ?? 0) === 0"
+          >
+            {{ p.name }} — {{ p.price }} €
+            {{ (p.stock ?? 0) === 0 ? '(esgotado)' : `(${p.stock} em stock)` }}
           </option>
         </select>
         <input

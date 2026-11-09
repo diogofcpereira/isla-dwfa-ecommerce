@@ -197,7 +197,13 @@ filtro foi reposto.
     linhas em falta. O total no formulário é uma estimativa (em cêntimos inteiros); o que conta é o
     `total` da API, somado em `Decimal`.
 
-12. **Testes sem rede** — 12 testes Vitest com `fetch` substituído (`vi.stubGlobal`): store
+12. **Testes sem rede** — 13 testes Vitest com `fetch` substituído (`vi.stubGlobal`): store
     (o refresh vai para o `localStorage`, o access não), middleware (401 → refresh → repetição com
     o Bearer novo; refresh falhado → logout sem loop), `LoginView` (401 → mensagem, sem navegar),
     `OrderStatusBadge` (`it.each` pelos quatro estados) e `ProductCard`.
+
+13. **O token lido fora da reatividade** — o middleware lê o access com `auth.accessToken()` (uma
+    cópia simples, atualizada por um `watch` com `flush: 'sync'`) e não com `auth.access`. Lido
+    como `ref` dentro do pedido, o `watchEffect` do `useFetch` passava a depender do token, e
+    cada renovação ou logout repetia os pedidos de todas as listas no ecrã. Um teste do
+    middleware prova que mudar o token não volta a chamar a API.
