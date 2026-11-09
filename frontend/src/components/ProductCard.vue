@@ -1,17 +1,22 @@
 <!-- ProductCard.vue — um componente "burro": recebe um produto, emite um evento. -->
 <script setup lang="ts">
+import { computed } from 'vue'
+
 import type { Product } from '@/types'
 
 const props = defineProps<{ product: Product }>()
 const emit = defineEmits<{
   select: [id: number]
 }>()
+
+// No esquema gerado o stock é opcional (tem default no modelo): ausente conta como 0.
+const stock = computed(() => props.product.stock ?? 0)
 </script>
 
 <template>
   <article
     class="card"
-    :class="{ out: props.product.stock === 0 }"
+    :class="{ out: stock === 0 }"
     role="button"
     tabindex="0"
     @click="emit('select', props.product.id)"
@@ -22,7 +27,7 @@ const emit = defineEmits<{
     <p class="meta">{{ props.product.sku }} · {{ props.product.category_name }}</p>
     <p class="price">{{ props.product.price }} €</p>
     <p class="stock">
-      {{ props.product.stock === 0 ? 'Esgotado' : `${props.product.stock} em stock` }}
+      {{ stock === 0 ? 'Esgotado' : `${stock} em stock` }}
     </p>
   </article>
 </template>

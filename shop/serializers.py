@@ -63,8 +63,10 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
+    # allow_null: uma encomenda ainda sem linhas tem Sum() = None. Sem isto o schema.yaml
+    # dizia "string" e o TypeScript acreditava (Ficha 04 · Parte 2).
     total = serializers.DecimalField(
-        max_digits=12, decimal_places=2, read_only=True)
+        max_digits=12, decimal_places=2, read_only=True, allow_null=True)
 
     class Meta:
         model = Order

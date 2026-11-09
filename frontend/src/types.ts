@@ -1,37 +1,26 @@
-// src/types.ts — as formas da API, escritas à mão a partir dos serializers do Django.
-// Na Aula 06 passam a ser geradas a partir do schema.yaml (openapi-typescript).
+// src/types.ts — nomes curtos para os tipos GERADOS do schema.yaml (src/api/schema.d.ts).
+// A fonte de verdade são os serializers do Django: regenerar com `npm run gen:api`.
+import type { components } from '@/api/schema'
 
-/** CategorySerializer: fields = ["id", "name", "slug"] */
-export interface Category {
-  id: number
-  name: string
-  slug: string
-}
+type Schemas = components['schemas']
 
-/** ProductSerializer (shop/serializers.py) */
-export interface Product {
-  id: number
-  category: number // FK → Category.id
-  category_name: string // source="category.name", só de leitura
-  sku: string
-  name: string
-  price: string // DecimalField → string no JSON ("9.90"), nunca number
-  stock: number
-  is_active: boolean
-  created_at: string // ISO 8601
-}
-
-/** O envelope do PageNumberPagination do DRF, para qualquer T. */
-export interface Paginated<T> {
-  count: number
-  next: string | null
-  previous: string | null
-  results: T[]
-}
+export type Category = Schemas['Category']
+export type Me = Schemas['Me']
+export type OrderItem = Schemas['OrderItem']
+export type OrderStatus = Schemas['StatusEnum'] // 'pending' | 'paid' | 'shipped' | 'cancelled'
+export type Order = Schemas['Order'] // total: string | null (uma encomenda sem linhas)
 
 /**
- * Problem Details (RFC 9457). O DRF, por omissão, só envia { "detail": "..." };
- * os outros campos ficam opcionais para aceitar as duas formas.
+ * Product: `stock` e `is_active` saem opcionais (stock?) porque têm default no modelo — o
+ * PEDIDO pode omiti-los. Numa resposta vêm sempre, mas não os estreitamos aqui: cada vista
+ * que carrega produtos precisaria de um `as`. Quem os usa trata a ausência (stock ?? 0).
+ */
+export type Product = Schemas['Product']
+
+/**
+ * Corpo de erro da API. O DRF, por omissão, envia { "detail": "..." } ou, num 400,
+ * { "campo": ["mensagem"] }; com Problem Details (RFC 9457) os erros por campo vêm em
+ * `errors`. Tudo opcional para aceitar as duas formas.
  */
 export interface Problem {
   type?: string
@@ -39,6 +28,7 @@ export interface Problem {
   status?: number
   detail?: string
   instance?: string
+  errors?: Record<string, unknown>
   [key: string]: unknown
 }
 

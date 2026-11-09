@@ -62,7 +62,13 @@ REST_FRAMEWORK = {
     },
 }
 
-SPECTACULAR_SETTINGS = {"TITLE": "Loja DWFA API", "VERSION": "1.0.0"}
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Loja DWFA API",
+    "VERSION": "1.0.0",
+    # Ficha 04 · Parte 2: um componente para o pedido (…Request) e outro para a resposta,
+    # para o openapi-typescript saber que id, access, refresh… só existem na resposta.
+    "COMPONENT_SPLIT_REQUEST": True,
+}
 
 MIDDLEWARE = [
     # Ficha 03 · Parte 3: TEM de ser o primeiro — o preflight OPTIONS não traz token
@@ -136,7 +142,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Ficha 03 · Parte 1: tempos de vida e rotação dos tokens
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    # Ficha 04 · Parte 2: JWT_ACCESS_MINUTES=1 no .env para ver a renovação a acontecer.
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=env.int("JWT_ACCESS_MINUTES", default=30)),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": True,      # cada refresh devolve um refresh novo
     "BLACKLIST_AFTER_ROTATION": True,   # o refresh antigo deixa de servir

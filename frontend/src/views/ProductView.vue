@@ -2,17 +2,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { get } from '@/api/client'
+import { api, unwrap } from '@/api/client'
 import { useFetch } from '@/composables/useFetch'
-import type { Product } from '@/types'
 
 const props = defineProps<{ id: string }>()
 
+// {id} no caminho é preenchido por params.path — e tem de ser um número.
 const {
   data: product,
   status,
   error,
-} = useFetch<Product>(() => get<Product>(`/api/v1/products/${props.id}/`))
+} = useFetch(() =>
+  unwrap(api.GET('/api/v1/products/{id}/', { params: { path: { id: Number(props.id) } } })),
+)
 
 // Os campos a mostrar num <dl>, como um objeto: o template percorre-o com v-for.
 const details = computed((): Record<string, string> => {
@@ -22,7 +24,7 @@ const details = computed((): Record<string, string> => {
     SKU: p.sku,
     Categoria: p.category_name,
     Preço: `${p.price} €`,
-    Stock: String(p.stock),
+    Stock: String(p.stock ?? 0),
     Ativo: p.is_active ? 'sim' : 'não',
     'Criado em': new Date(p.created_at).toLocaleString('pt-PT'),
   }

@@ -3,10 +3,9 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { get } from '@/api/client'
+import { api, unwrap } from '@/api/client'
 import ProductCard from '@/components/ProductCard.vue'
 import { useFetch } from '@/composables/useFetch'
-import type { Paginated, Product } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -22,11 +21,19 @@ const search = computed({
 
 const page = computed(() => Number(route.query.page ?? 1))
 
-const { data, status, error, reload } = useFetch<Paginated<Product>>(() =>
-  get<Paginated<Product>>('/api/v1/products/', {
-    search: search.value,
-    page: page.value > 1 ? page.value : undefined,
-  }),
+// O URL e os parâmetros são verificados pelo compilador (paths do schema.d.ts):
+// query: { foo: 1 } não compila. O tipo de `data` (PaginatedProductList) é inferido.
+const { data, status, error, reload } = useFetch(() =>
+  unwrap(
+    api.GET('/api/v1/products/', {
+      params: {
+        query: {
+          search: search.value || undefined,
+          page: page.value > 1 ? page.value : undefined,
+        },
+      },
+    }),
+  ),
 )
 
 function goTo(n: number) {

@@ -126,8 +126,8 @@ paths:
       tags:
       - schema
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -148,6 +148,63 @@ paths:
               schema:
                 type: object
                 additionalProperties: {}
+          description: ''
+  /api/v1/auth/token/:
+    post:
+      operationId: v1_auth_token_create
+      description: |-
+        POST /api/v1/auth/token/ com limite de tentativas.
+
+        O scope 'auth' está definido em REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]
+        (10 por minuto por IP). A 11.ª tentativa recebe 429 Too Many Requests,
+        mesmo com a password certa — trava ataques de força bruta sem bloquear contas.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPairRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenObtainPair'
+          description: ''
+  /api/v1/auth/token/refresh/:
+    post:
+      operationId: v1_auth_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - v1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
           description: ''
   /api/v1/categories/:
     get:
@@ -174,8 +231,8 @@ paths:
       tags:
       - v1
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -197,8 +254,8 @@ paths:
       tags:
       - v1
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
       - {}
       responses:
         '200':
@@ -206,6 +263,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Category'
+          description: ''
+  /api/v1/me/:
+    get:
+      operationId: v1_me_retrieve
+      description: Devolve o utilizador autenticado. A SPA chama-a logo depois do
+        login.
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
           description: ''
   /api/v1/order-items/:
     get:
@@ -236,9 +310,8 @@ paths:
       tags:
       - v1
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -254,18 +327,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderItem'
+              $ref: '#/components/schemas/OrderItemRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/OrderItem'
+              $ref: '#/components/schemas/OrderItemRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/OrderItem'
+              $ref: '#/components/schemas/OrderItemRequest'
         required: true
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -286,9 +358,8 @@ paths:
       tags:
       - v1
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -311,18 +382,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderItem'
+              $ref: '#/components/schemas/OrderItemRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/OrderItem'
+              $ref: '#/components/schemas/OrderItemRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/OrderItem'
+              $ref: '#/components/schemas/OrderItemRequest'
         required: true
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -345,17 +415,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedOrderItem'
+              $ref: '#/components/schemas/PatchedOrderItemRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedOrderItem'
+              $ref: '#/components/schemas/PatchedOrderItemRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedOrderItem'
+              $ref: '#/components/schemas/PatchedOrderItemRequest'
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -375,9 +444,8 @@ paths:
       tags:
       - v1
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '204':
           description: No response body
@@ -424,9 +492,8 @@ paths:
       tags:
       - v1
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -438,22 +505,9 @@ paths:
       operationId: v1_orders_create
       tags:
       - v1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Order'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Order'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Order'
-        required: true
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -474,9 +528,8 @@ paths:
       tags:
       - v1
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -495,22 +548,9 @@ paths:
         required: true
       tags:
       - v1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Order'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Order'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Order'
-        required: true
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -529,21 +569,9 @@ paths:
         required: true
       tags:
       - v1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedOrder'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedOrder'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedOrder'
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -563,9 +591,8 @@ paths:
       tags:
       - v1
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '204':
           description: No response body
@@ -582,9 +609,8 @@ paths:
       tags:
       - v1
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -635,9 +661,8 @@ paths:
       tags:
       - v1
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -653,18 +678,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Product'
+              $ref: '#/components/schemas/ProductRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Product'
+              $ref: '#/components/schemas/ProductRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Product'
+              $ref: '#/components/schemas/ProductRequest'
         required: true
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '201':
           content:
@@ -685,9 +709,8 @@ paths:
       tags:
       - v1
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -710,18 +733,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Product'
+              $ref: '#/components/schemas/ProductRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Product'
+              $ref: '#/components/schemas/ProductRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Product'
+              $ref: '#/components/schemas/ProductRequest'
         required: true
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -744,17 +766,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedProduct'
+              $ref: '#/components/schemas/PatchedProductRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedProduct'
+              $ref: '#/components/schemas/PatchedProductRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedProduct'
+              $ref: '#/components/schemas/PatchedProductRequest'
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -774,9 +795,8 @@ paths:
       tags:
       - v1
       security:
+      - jwtAuth: []
       - cookieAuth: []
-      - basicAuth: []
-      - {}
       responses:
         '204':
           description: No response body
@@ -799,6 +819,21 @@ components:
       - id
       - name
       - slug
+    Me:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        groups:
+          type: array
+          items:
+            type: string
+      required:
+      - groups
+      - id
+      - username
     Order:
       type: object
       properties:
@@ -807,6 +842,7 @@ components:
           readOnly: true
         customer:
           type: integer
+          readOnly: true
         status:
           allOf:
           - $ref: '#/components/schemas/StatusEnum'
@@ -825,6 +861,7 @@ components:
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
           readOnly: true
+          nullable: true
       required:
       - created_at
       - customer
@@ -861,6 +898,21 @@ components:
       - product_name
       - quantity
       - unit_price
+    OrderItemRequest:
+      type: object
+      properties:
+        order:
+          type: integer
+        product:
+          type: integer
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+      required:
+      - order
+      - product
+      - quantity
     PaginatedCategoryList:
       type: object
       required:
@@ -953,70 +1005,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Product'
-    PatchedOrder:
+    PatchedOrderItemRequest:
       type: object
       properties:
-        id:
-          type: integer
-          readOnly: true
-        customer:
-          type: integer
-        status:
-          allOf:
-          - $ref: '#/components/schemas/StatusEnum'
-          readOnly: true
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/OrderItem'
-          readOnly: true
-        total:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
-          readOnly: true
-    PatchedOrderItem:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
         order:
           type: integer
         product:
           type: integer
-        product_name:
-          type: string
-          readOnly: true
         quantity:
           type: integer
           maximum: 2147483647
           minimum: 0
-        unit_price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          readOnly: true
-    PatchedProduct:
+    PatchedProductRequest:
       type: object
       properties:
-        id:
-          type: integer
-          readOnly: true
         category:
           type: integer
-        category_name:
-          type: string
-          readOnly: true
         sku:
           type: string
+          minLength: 1
           maxLength: 32
         name:
           type: string
+          minLength: 1
           maxLength: 200
         price:
           type: string
@@ -1028,10 +1039,6 @@ components:
           minimum: 0
         is_active:
           type: boolean
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
     Product:
       type: object
       properties:
@@ -1071,6 +1078,34 @@ components:
       - name
       - price
       - sku
+    ProductRequest:
+      type: object
+      properties:
+        category:
+          type: integer
+        sku:
+          type: string
+          minLength: 1
+          maxLength: 32
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        stock:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+      required:
+      - category
+      - name
+      - price
+      - sku
     StatusEnum:
       enum:
       - pending
@@ -1083,11 +1118,57 @@ components:
         * `paid` - Paga
         * `shipped` - Enviada
         * `cancelled` - Cancelada
+    TokenObtainPair:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - refresh
+    TokenObtainPairRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          minLength: 1
+      required:
+      - refresh
   securitySchemes:
-    basicAuth:
-      type: http
-      scheme: basic
     cookieAuth:
       type: apiKey
       in: cookie
       name: sessionid
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
