@@ -1,5 +1,23 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { watch } from 'vue'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
+
+import { useAuth } from '@/stores/auth'
+
+const auth = useAuth()
+const route = useRoute()
+const router = useRouter()
+
+// A sessão acabou (Sair, ou a renovação do token falhou) num ecrã privado → /login.
+// O guard só corre quando se navega; isto cobre o caso de já lá estarmos.
+watch(
+  () => auth.isLoggedIn,
+  (loggedIn) => {
+    if (!loggedIn && route.meta.requiresAuth) {
+      router.push({ name: 'login', query: { next: route.fullPath } })
+    }
+  },
+)
 </script>
 
 <template>
@@ -7,6 +25,12 @@ import { RouterLink, RouterView } from 'vue-router'
     <RouterLink :to="{ name: 'products' }" class="brand">Loja DWFA</RouterLink>
     <nav>
       <RouterLink :to="{ name: 'products' }">Produtos</RouterLink>
+      <template v-if="auth.isLoggedIn">
+        <RouterLink :to="{ name: 'orders' }">As minhas encomendas</RouterLink>
+        <span class="who">{{ auth.user?.username }}</span>
+        <button type="button" @click="auth.logout()">Sair</button>
+      </template>
+      <RouterLink v-else :to="{ name: 'login' }">Entrar</RouterLink>
     </nav>
   </header>
 
@@ -27,6 +51,14 @@ import { RouterLink, RouterView } from 'vue-router'
   font-weight: 700;
   text-decoration: none;
   color: inherit;
+}
+nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.who {
+  color: #6b6b6b;
 }
 .content {
   max-width: 64rem;
