@@ -800,6 +800,48 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/reports/orders/:
+    post:
+      operationId: v1_reports_orders_create
+      description: Enfileira o relatório e responde logo. Quem pede fica registado
+        como dono.
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAccepted'
+          description: ''
+  /api/v1/tasks/{task_id}/:
+    get:
+      operationId: v1_tasks_retrieve
+      description: O estado de uma tarefa. Só o dono (ou um gestor); para os outros,
+        a tarefa não existe.
+      parameters:
+      - in: path
+        name: task_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskStatus'
+          description: ''
+        '404':
+          description: Tarefa desconhecida, expirada ou de outro.
 components:
   schemas:
     Category:
@@ -1118,6 +1160,40 @@ components:
         * `paid` - Paga
         * `shipped` - Enviada
         * `cancelled` - Cancelada
+    TaskAccepted:
+      type: object
+      properties:
+        id:
+          type: string
+        status_url:
+          type: string
+      required:
+      - id
+      - status_url
+    TaskStatus:
+      type: object
+      properties:
+        id:
+          type: string
+        state:
+          type: string
+        progress:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        result:
+          type: object
+          additionalProperties: {}
+          nullable: true
+        error:
+          type: string
+          nullable: true
+      required:
+      - error
+      - id
+      - progress
+      - result
+      - state
     TokenObtainPair:
       type: object
       properties:
