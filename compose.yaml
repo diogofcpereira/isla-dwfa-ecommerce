@@ -12,5 +12,14 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+  redis:
+    # Ficha 05: broker do Celery (/0), resultados das tarefas (/0) e cache do Django (/1)
+    image: redis:7-alpine
+    ports: ["6379:6379"]          # porta 6379 ocupada? → "6380:6379" e REDIS_URL com :6380
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 volumes:
   pgdata: {}
