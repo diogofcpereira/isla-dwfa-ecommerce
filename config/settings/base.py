@@ -140,6 +140,33 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Ficha 05 · Redis: uma instância, três usos, separados pelo número da base (/0, /1).
+REDIS_URL = env("REDIS_URL", default="redis://localhost:6379")
+
+# Celery (config/celery.py lê tudo o que começa por CELERY_)
+CELERY_BROKER_URL = f"{REDIS_URL}/0"  # a fila das mensagens
+CELERY_RESULT_BACKEND = f"{REDIS_URL}/0"  # estado e resultado das tarefas (Parte 2)
+CELERY_TASK_ACKS_LATE = True  # confirma a mensagem só quando a tarefa acaba
+CELERY_TASK_SOFT_TIME_LIMIT = 60  # segundos: exceção dentro da tarefa
+CELERY_TASK_TIME_LIMIT = 120  # segundos: o worker mata a tarefa
+CELERY_RESULT_EXPIRES = 3600  # o resultado de uma tarefa fica 1 h no Redis
+
+# Cache do Django em Redis (/1): o dono de cada tarefa (Parte 2) e o throttle do login,
+# partilhados por todos os processos (runserver e worker).
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": f"{REDIS_URL}/1",
+    }
+}
+
+DEFAULT_FROM_EMAIL = "Loja DWFA <loja@dwfa.local>"
+
+# Parte 2: segundos de "trabalho" por encomenda no relatório (0 nos testes).
+REPORT_STEP_SECONDS = 0.2
+# Parte 1: RECEIPT_FLAKY=True no .env faz falhar a 1.ª tentativa do recibo (ver os retries).
+RECEIPT_FLAKY = env.bool("RECEIPT_FLAKY", default=False)
+
 # Ficha 03 · Parte 1: tempos de vida e rotação dos tokens
 SIMPLE_JWT = {
     # Ficha 04 · Parte 2: JWT_ACCESS_MINUTES=1 no .env para ver a renovação a acontecer.
