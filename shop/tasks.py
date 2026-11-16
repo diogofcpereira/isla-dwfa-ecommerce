@@ -4,15 +4,18 @@ Três regras: ids, nunca objetos (a mensagem é JSON e a linha pode ter mudado);
 idempotentes (o broker entrega pelo menos uma vez); enfileiradas depois do commit.
 """
 
+import time
+from decimal import Decimal
 from smtplib import SMTPException
 
 from celery import shared_task
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import transaction
+from django.db.models import F, Sum
 from django.utils import timezone
 
-from .models import Payment
+from .models import Order, Payment
 
 
 class ReceiptGatewayError(Exception):
@@ -59,3 +62,27 @@ def send_order_receipt(self, order_id: int) -> str:
         payment.receipt_sent_at = timezone.now()
         payment.save(update_fields=["receipt_sent_at"])
     return "sent"
+
+
+@shared_task(bind=True)
+def export_orders_report(self, user_id: int, customer_id: int | None) -> dict:
+    """Relatório das encomendas de um cliente (todas, se customer_id for None: gestor).
+
+    Vai publicando o progresso com update_state; o GET /api/v1/tasks/<id>/ lê-o.
+    """
+    qs = Order.objects.all()
+    if customer_id is not None:
+        qs = qs.filter(customer_id=customer_id)
+    qs = qs.annotate(total=Sum(F("items__quantity") * F("items__unit_price"))).order_by("id")
+    total_orders = qs.count()
+    amount = Decimal("0")
+    by_status: dict[str, int] = {}
+
+    for i, order in enumerate(qs.iterator(), start=1):
+        amount += order.total or Decimal("0")
+        by_status[order.status] = by_status.get(order.status, 0) + 1
+        time.sleep(settings.REPORT_STEP_SECONDS)  # faz de trabalho a sério
+        self.update_state(state="PROGRESS", meta={"current": i, "total": total_orders})
+
+    # O resultado vai em JSON para o Redis: o Decimal segue como texto (nunca float).
+    return {"orders": total_orders, "amount": str(amount), "by_status": by_status}
