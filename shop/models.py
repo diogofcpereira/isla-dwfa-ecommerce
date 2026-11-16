@@ -99,6 +99,9 @@ class Payment(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     paid_at = models.DateTimeField(auto_now_add=True)
     gateway_response = models.JSONField(default=dict, blank=True)
+    # Ficha 05: quando o recibo saiu. É a "memória" que torna a tarefa idempotente:
+    # preenchido = já enviado, uma segunda execução não envia outro.
+    receipt_sent_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [
