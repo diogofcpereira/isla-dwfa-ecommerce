@@ -16,8 +16,17 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ["id", "category", "category_name", "sku", "name",
-                  "price", "stock", "is_active", "created_at"]
+        fields = [
+            "id",
+            "category",
+            "category_name",
+            "sku",
+            "name",
+            "price",
+            "stock",
+            "is_active",
+            "created_at",
+        ]
         read_only_fields = ["created_at"]
 
     def validate_price(self, value):
@@ -31,15 +40,14 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderItem
-        fields = ["id", "order", "product", "product_name",
-                  "quantity", "unit_price"]
+        fields = ["id", "order", "product", "product_name", "quantity", "unit_price"]
         # O preço é copiado do produto pelo servidor (services.add_item).
         read_only_fields = ["unit_price"]
 
     def validate_order(self, order):
         """Um cliente só pode acrescentar linhas às suas encomendas."""
         request = self.context.get("request")
-        if request is None:                      # uso fora de uma view (ex.: shell)
+        if request is None:  # uso fora de uma view (ex.: shell)
             return order
         user = request.user
         if not is_gestor(user) and order.customer.user_id != user.id:
@@ -56,8 +64,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         product = attrs.get("product") or getattr(self.instance, "product", None)
         quantity = attrs.get("quantity", getattr(self.instance, "quantity", 0))
         if product and quantity > product.stock:
-            raise serializers.ValidationError(
-                {"quantity": f"Só há {product.stock} em stock."})
+            raise serializers.ValidationError({"quantity": f"Só há {product.stock} em stock."})
         return attrs
 
 
@@ -66,7 +73,8 @@ class OrderSerializer(serializers.ModelSerializer):
     # allow_null: uma encomenda ainda sem linhas tem Sum() = None. Sem isto o schema.yaml
     # dizia "string" e o TypeScript acreditava (Ficha 04 · Parte 2).
     total = serializers.DecimalField(
-        max_digits=12, decimal_places=2, read_only=True, allow_null=True)
+        max_digits=12, decimal_places=2, read_only=True, allow_null=True
+    )
 
     class Meta:
         model = Order

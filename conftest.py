@@ -1,4 +1,5 @@
 """Fixtures partilhadas por todos os testes do projeto."""
+
 import pytest
 from django.core.cache import cache
 

@@ -31,8 +31,7 @@ class Command(BaseCommand):
         categories = list(Category.objects.all())
 
         missing = opts["products"] - Product.objects.count()
-        ProductFactory.create_batch(
-            max(missing, 0), category=factory.Iterator(categories))
+        ProductFactory.create_batch(max(missing, 0), category=factory.Iterator(categories))
         products = list(Product.objects.all())
 
         missing = opts["customers"] - Customer.objects.count()
@@ -45,7 +44,10 @@ class Command(BaseCommand):
             for product in random.sample(products, k=random.randint(1, 4)):
                 OrderItemFactory(order=order, product=product)
 
-        self.stdout.write(self.style.SUCCESS(
-            f"{Category.objects.count()} categorias, "
-            f"{Product.objects.count()} produtos, "
-            f"{Order.objects.count()} encomendas."))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"{Category.objects.count()} categorias, "
+                f"{Product.objects.count()} produtos, "
+                f"{Order.objects.count()} encomendas."
+            )
+        )

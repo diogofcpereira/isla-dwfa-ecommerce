@@ -17,8 +17,7 @@ class Category(models.Model):
 
 
 class Product(models.Model):
-    category = models.ForeignKey(
-        Category, on_delete=models.PROTECT, related_name="products")
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products")
     sku = models.CharField(max_length=32, unique=True)
     name = models.CharField(max_length=200)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -29,12 +28,10 @@ class Product(models.Model):
     class Meta:
         ordering = ["name"]
         constraints = [
-            models.CheckConstraint(
-                condition=Q(price__gte=0), name="ck_product_price_gte_0"),
+            models.CheckConstraint(condition=Q(price__gte=0), name="ck_product_price_gte_0"),
         ]
         indexes = [
-            models.Index(fields=["category", "is_active"],
-                         name="ix_product_category_active"),
+            models.Index(fields=["category", "is_active"], name="ix_product_category_active"),
         ]
 
     def __str__(self):
@@ -43,8 +40,8 @@ class Product(models.Model):
 
 class Customer(models.Model):
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-        related_name="customer")
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="customer"
+    )
     phone = models.CharField(max_length=20, blank=True)
     shipping_address = models.TextField(blank=True)
 
@@ -59,17 +56,14 @@ class Order(models.Model):
         SHIPPED = "shipped", "Enviada"
         CANCELLED = "cancelled", "Cancelada"
 
-    customer = models.ForeignKey(
-        Customer, on_delete=models.PROTECT, related_name="orders")
-    status = models.CharField(
-        max_length=10, choices=Status, default=Status.PENDING)
+    customer = models.ForeignKey(Customer, on_delete=models.PROTECT, related_name="orders")
+    status = models.CharField(max_length=10, choices=Status, default=Status.PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["customer", "status"],
-                         name="ix_order_customer_status"),
+            models.Index(fields=["customer", "status"], name="ix_order_customer_status"),
         ]
 
     def __str__(self):
@@ -77,22 +71,19 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
-    order = models.ForeignKey(
-        Order, on_delete=models.CASCADE, related_name="items")
-    product = models.ForeignKey(
-        Product, on_delete=models.PROTECT, related_name="order_items")
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
+    product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name="order_items")
     quantity = models.PositiveIntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(
-                fields=["order", "product"],
-                name="uq_orderitem_order_product"),
+            models.UniqueConstraint(fields=["order", "product"], name="uq_orderitem_order_product"),
             models.CheckConstraint(
-                condition=Q(quantity__gte=1),
-                name="ck_orderitem_quantity_gte_1"),
+                condition=Q(quantity__gte=1), name="ck_orderitem_quantity_gte_1"
+            ),
         ]
+
     def __str__(self):
         return f"{self.quantity} × {self.product.name}"
 
@@ -103,8 +94,7 @@ class Payment(models.Model):
         MBWAY = "mbway", "MB WAY"
         TRANSFER = "transfer", "Transferência"
 
-    order = models.OneToOneField(
-        Order, on_delete=models.PROTECT, related_name="payment")
+    order = models.OneToOneField(Order, on_delete=models.PROTECT, related_name="payment")
     method = models.CharField(max_length=10, choices=Method)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     paid_at = models.DateTimeField(auto_now_add=True)
@@ -112,8 +102,8 @@ class Payment(models.Model):
 
     class Meta:
         constraints = [
-            models.CheckConstraint(
-                condition=Q(amount__gt=0), name="ck_payment_amount_gt_0"),
+            models.CheckConstraint(condition=Q(amount__gt=0), name="ck_payment_amount_gt_0"),
         ]
+
     def __str__(self):
         return f"Pagamento da encomenda #{self.order_id}"

@@ -6,6 +6,7 @@ Papéis:
 - cliente: qualquer utilizador autenticado; só mexe nas suas encomendas;
 - gestor: pertence ao grupo 'gestores' (criado na migração 0002); pode tudo.
 """
+
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 GESTORES = "gestores"
@@ -27,7 +28,7 @@ class IsGestorOrReadOnly(BasePermission):
     """Leitura para todos (catálogo público); escrita só para gestores."""
 
     def has_permission(self, request, view):
-        if request.method in SAFE_METHODS:   # GET, HEAD, OPTIONS
+        if request.method in SAFE_METHODS:  # GET, HEAD, OPTIONS
             return True
         return is_gestor(request.user)
 
