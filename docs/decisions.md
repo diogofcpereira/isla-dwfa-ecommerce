@@ -207,3 +207,44 @@ filtro foi reposto.
     como `ref` dentro do pedido, o `watchEffect` do `useFetch` passava a depender do token, e
     cada renovação ou logout repetia os pedidos de todas as listas no ecrã. Um teste do
     middleware prova que mudar o token não volta a chamar a API.
+
+## Ficha 05 — Fora do pedido/resposta (Celery, Redis)
+
+Feito: Parte 1 (obrigatória) e Parte 2 (relatório com 202 e progresso).
+
+1. **O recibo é idempotente** — `send_order_receipt(order_id)` lê o `Payment` com
+   `select_for_update()` dentro de uma transação e sai com `"already-sent"` se
+   `receipt_sent_at` já estiver preenchido; senão envia o email e grava `receipt_sent_at` na
+   mesma transação. O broker entrega pelo menos uma vez (e `acks_late=True` reentrega se o worker
+   morrer), por isso correr duas vezes tem de dar um email. Resta a janela "email enviado, worker
+   morre antes do commit" → dois recibos: aceitável para um email, não para cobrar um cartão.
+
+2. **Porquê `on_commit`** — o `pay_order` enfileira com
+   `transaction.on_commit(lambda: send_order_receipt.delay(order.pk))`. Um `.delay()` dentro da
+   transação podia chegar ao worker antes do commit (`Payment.DoesNotExist`) ou mandar o recibo de
+   um pagamento que a seguir fazia rollback. A API responde logo; com o worker em baixo a mensagem
+   espera no Redis e o recibo sai quando ele voltar.
+
+3. **O dono da tarefa fica na cache, e uma tarefa alheia dá 404** — ao enfileirar o relatório
+   guarda-se `cache.set(f"task:{id}:owner", user.id, 3600)` (cache do Django em Redis, base /1),
+   porque o `AsyncResult` não sabe quem pediu. O `GET /api/v1/tasks/<id>/` responde 404 a tarefas
+   desconhecidas, expiradas ou de outro utilizador — a mesma resposta, como as encomendas da
+   Ficha 03: um id de tarefa é uma capacidade e não se confirma que existe. O gestor lê todas.
+
+4. **O pagamento passa a ficar registado** — o `pay_order` cria o `Payment` (cartão, simulado) com o
+   total calculado no servidor em `Decimal`; é aí que vive o `receipt_sent_at`. Uma encomenda sem
+   linhas dá 409 (o `Payment` teria valor 0, que a constraint proíbe).
+
+5. **Retries só do que é transitório** — `autoretry_for` com `ReceiptGatewayError`,
+   `SMTPException`, `ConnectionError` e `TimeoutError`, `retry_backoff` exponencial com jitter,
+   `max_retries=3`; limites de 60 s (soft) e 120 s (hard). Um `DoesNotExist` não se repete.
+   `RECEIPT_FLAKY=1` no `.env` faz falhar a primeira tentativa, para ver o retry no worker.
+
+6. **Testes sem Redis** — em `config/settings/test.py` as tarefas correm em modo eager, os
+   resultados ficam em memória (`cache+memory://`) e a cache é `LocMemCache`: o CI não precisa de
+   serviço Redis. Quatro testes novos em `shop/tests/test_tasks.py`: idempotência (um email),
+   enfileirado só no commit, encomenda vazia → 409, relatório 202 + estado só para o dono.
+
+**Para correr:** `docker compose up -d` (PostgreSQL + Redis) · terminal 1:
+`uv run manage.py runserver` · terminal 2: `uv run celery -A config worker -l info` ·
+testes: `uv run pytest`.
