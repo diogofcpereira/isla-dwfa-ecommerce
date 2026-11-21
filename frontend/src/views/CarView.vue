@@ -93,6 +93,14 @@ async function save() {
         </dl>
         <p v-if="car.is_active === false" class="warn">Esta viatura não está à venda.</p>
 
+        <RouterLink
+          v-if="auth.isLoggedIn && car.is_active && (car.stock ?? 0) > 0"
+          :to="{ name: 'new-order', query: { car: car.id } }"
+          class="buy"
+        >
+          Encomendar esta viatura
+        </RouterLink>
+
         <!-- Só para gestores. A API repete a regra (IsGestorOrReadOnly): esconder não protege. -->
         <form v-if="auth.isGestor" class="panel" novalidate @submit.prevent="save">
           <h2>Gestão</h2>
@@ -157,6 +165,11 @@ async function save() {
 }
 .warn {
   color: #b00020;
+}
+.buy {
+  display: inline-block;
+  margin: 0.5rem 0 1rem;
+  font-weight: 600;
 }
 .panel {
   display: grid;

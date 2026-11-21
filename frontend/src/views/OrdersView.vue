@@ -117,6 +117,7 @@ async function remove(order: Order) {
   <section>
     <header class="head">
       <h1>{{ auth.isGestor ? 'Encomendas' : 'As minhas encomendas' }}</h1>
+      <RouterLink :to="{ name: 'new-order' }">Nova encomenda</RouterLink>
     </header>
 
     <label class="filter">
@@ -128,6 +129,9 @@ async function remove(order: Order) {
     </label>
 
     <p v-if="notice" role="status" class="notice">{{ notice }}</p>
+    <p v-else-if="typeof route.query.created === 'string'" role="status" class="notice">
+      Encomenda #{{ route.query.created }} criada. Escolhe o pagamento para a concluir.
+    </p>
 
     <AsyncState
       :status="status"
