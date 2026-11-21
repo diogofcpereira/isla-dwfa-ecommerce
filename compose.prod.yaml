@@ -1,0 +1,73 @@
+# compose.prod.yaml — a aplicação completa, como em produção, num clone limpo:
+#   cp .env.example .env
+#   docker compose -f compose.prod.yaml up --build -d
+#   docker compose -f compose.prod.yaml exec backend python manage.py migrate
+#   docker compose -f compose.prod.yaml exec backend python manage.py seed
+#   → http://localhost   (WEB_PORT=8080 no .env se a porta 80 estiver ocupada)
+name: drivenow-prod # projeto próprio: não toca nos contentores nem no volume do compose.yaml (dev)
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?defina POSTGRES_DB no .env}
+      POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER no .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Sem "ports": a base de dados só é visível dentro da rede do compose.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env # SECRET_KEY, ALLOWED_HOSTS, DJANGO_HTTPS…
+    environment:
+      # Estes ganham ao .env: o .env serve o dev (settings.dev, base de dados em localhost).
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    volumes:
+      - static:/app/staticfiles
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # /api/health/ responde 200 só se a app falar com o PostgreSQL (503 se não).
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health/', timeout=3)"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./frontend
+    ports:
+      - "${WEB_PORT:-80}:80"
+    volumes:
+      - static:/usr/share/nginx/static:ro
+    depends_on:
+      backend:
+        condition: service_healthy # o Nginx só arranca com a API pronta
+    healthcheck:
+      # Passa pelo Nginx e pelo proxy: se isto responde, a SPA e a API estão ligadas.
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/api/health/"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    restart: unless-stopped
+
+volumes:
+  pgdata: {}
+  static: {}
