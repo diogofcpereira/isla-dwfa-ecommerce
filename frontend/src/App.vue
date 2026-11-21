@@ -22,8 +22,9 @@ watch(
 
 <template>
   <header class="topbar">
-    <RouterLink to="/" class="brand">DriveNow</RouterLink>
+    <RouterLink :to="{ name: 'cars' }" class="brand">DriveNow</RouterLink>
     <nav aria-label="Principal">
+      <RouterLink :to="{ name: 'cars' }">Viaturas</RouterLink>
       <template v-if="auth.isLoggedIn">
         <span class="who">
           {{ auth.user?.username }}<template v-if="auth.isGestor"> · gestor</template>

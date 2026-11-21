@@ -2,6 +2,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import { useAuth } from '@/stores/auth'
+import CarsView from '@/views/CarsView.vue'
 
 // Os nossos dados em cada rota, tipados: `requiresAuth: 'yes'` não compila.
 declare module 'vue-router' {
@@ -13,8 +14,15 @@ declare module 'vue-router' {
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    // O catálogo (/cars) chega no commit seguinte; até lá a raiz leva ao login.
-    { path: '/', redirect: { name: 'login' } },
+    { path: '/', redirect: { name: 'cars' } },
+    { path: '/cars', name: 'cars', component: CarsView },
+    {
+      // (\d+): só números, como <int:pk> no Django. /cars/abc cai no catch-all.
+      path: '/cars/:id(\\d+)',
+      name: 'car',
+      props: true, // o :id chega ao componente como a prop `id` (string)
+      component: () => import('@/views/CarView.vue'), // lazy: um chunk só para o detalhe
+    },
     { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue') },
     {
       path: '/:pathMatch(.*)*',
