@@ -14,7 +14,7 @@ watch(
   () => auth.isLoggedIn,
   (loggedIn) => {
     if (!loggedIn && route.meta.requiresAuth) {
-      router.push({ name: 'login', query: { next: route.fullPath } })
+      void router.push({ name: 'login', query: { next: route.fullPath } })
     }
   },
 )
@@ -22,12 +22,12 @@ watch(
 
 <template>
   <header class="topbar">
-    <RouterLink :to="{ name: 'products' }" class="brand">Loja DWFA</RouterLink>
-    <nav>
-      <RouterLink :to="{ name: 'products' }">Produtos</RouterLink>
+    <RouterLink to="/" class="brand">DriveNow</RouterLink>
+    <nav aria-label="Principal">
       <template v-if="auth.isLoggedIn">
-        <RouterLink :to="{ name: 'orders' }">As minhas encomendas</RouterLink>
-        <span class="who">{{ auth.user?.username }}</span>
+        <span class="who">
+          {{ auth.user?.username }}<template v-if="auth.isGestor"> · gestor</template>
+        </span>
         <button type="button" @click="auth.logout()">Sair</button>
       </template>
       <RouterLink v-else :to="{ name: 'login' }">Entrar</RouterLink>
@@ -42,10 +42,13 @@ watch(
 <style scoped>
 .topbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
   padding: 0.75rem 1.5rem;
   border-bottom: 1px solid #ddd;
+  background: #fff;
 }
 .brand {
   font-weight: 700;
@@ -54,8 +57,12 @@ watch(
 }
 nav {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 1rem;
+}
+nav a.router-link-active {
+  font-weight: 600;
 }
 .who {
   color: #6b6b6b;

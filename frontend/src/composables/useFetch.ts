@@ -1,7 +1,8 @@
-// src/composables/useFetch.ts — os três estados (a carregar · erro · dados) num só sítio.
+// src/composables/useFetch.ts — os estados de um ecrã que carrega dados num só sítio:
+// a carregar · erro (com Retry) · dados. O "vazio" decide-o o ecrã, com os dados na mão.
 import { ref, watchEffect, type Ref } from 'vue'
 
-import { ApiError } from '@/api/client'
+import { errorMessage } from '@/api/client'
 import type { Status } from '@/types'
 
 export function useFetch<T>(load: () => Promise<T>) {
@@ -27,7 +28,7 @@ export function useFetch<T>(load: () => Promise<T>) {
     } catch (e) {
       if (mine !== ticket) return
       status.value = 'error'
-      error.value = e instanceof ApiError ? e.message : 'Erro de rede (a API está a correr? CORS?)'
+      error.value = errorMessage(e)
     }
   }
 

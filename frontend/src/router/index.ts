@@ -2,7 +2,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import { useAuth } from '@/stores/auth'
-import ProductsView from '@/views/ProductsView.vue'
 
 // Os nossos dados em cada rota, tipados: `requiresAuth: 'yes'` não compila.
 declare module 'vue-router' {
@@ -14,28 +13,9 @@ declare module 'vue-router' {
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', redirect: { name: 'products' } },
-    { path: '/products', name: 'products', component: ProductsView },
-    {
-      // (\d+): só números, como <int:pk> no Django. /products/abc cai no catch-all.
-      path: '/products/:id(\\d+)',
-      name: 'product',
-      props: true, // o :id chega ao componente como a prop `id` (string)
-      component: () => import('@/views/ProductView.vue'), // lazy: um chunk só para o detalhe
-    },
+    // O catálogo (/cars) chega no commit seguinte; até lá a raiz leva ao login.
+    { path: '/', redirect: { name: 'login' } },
     { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue') },
-    {
-      path: '/orders',
-      name: 'orders',
-      component: () => import('@/views/OrdersView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/orders/new',
-      name: 'new-order',
-      component: () => import('@/views/NewOrderView.vue'),
-      meta: { requiresAuth: true },
-    },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
@@ -45,7 +25,7 @@ const router = createRouter({
 })
 
 // ≈ @login_required com ?next=. Corre antes de cada navegação.
-// Protege o ECRÃ; os DADOS protege-os a API (401/403/404 da Ficha 03).
+// Protege o ECRÃ; os DADOS protege-os a API (401/403/404 do M1).
 router.beforeEach((to) => {
   const auth = useAuth()
   if (to.meta.requiresAuth && !auth.isLoggedIn) {

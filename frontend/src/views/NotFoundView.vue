@@ -11,6 +11,6 @@ const route = useRoute()
     <p>
       O endereço <code>{{ route.fullPath }}</code> não corresponde a nenhum ecrã.
     </p>
-    <RouterLink :to="{ name: 'products' }">Ir para os produtos</RouterLink>
+    <RouterLink to="/">Ir para o início</RouterLink>
   </section>
 </template>

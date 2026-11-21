@@ -26,6 +26,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/logout/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description POST /api/v1/auth/logout/ {"refresh": "..."} → 200.
+         *
+         *     Põe o refresh token na blacklist: a partir daí, /auth/token/refresh/ recusa-o
+         *     com 401. O access token ainda vale até expirar (30 min); é por isso que é curto.
+         *     Não exige o access token: quem tem o refresh pode sempre desistir dele.
+         */
+        post: operations["v1_auth_logout_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/token/": {
         parameters: {
             query?: never;
@@ -69,14 +92,82 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/categories/": {
+    "/api/v1/brands/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_categories_list"];
+        get: operations["v1_brands_list"];
+        put?: never;
+        post: operations["v1_brands_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/brands/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_brands_retrieve"];
+        put: operations["v1_brands_update"];
+        post?: never;
+        delete: operations["v1_brands_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["v1_brands_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/cars/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_cars_list"];
+        put?: never;
+        post: operations["v1_cars_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cars/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1_cars_retrieve"];
+        put: operations["v1_cars_update"];
+        post?: never;
+        delete: operations["v1_cars_destroy"];
+        options?: never;
+        head?: never;
+        patch: operations["v1_cars_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/customers/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Perfis de cliente. Não há POST nem DELETE: o perfil nasce com a primeira
+         *     encomenda (OrderViewSet.perform_create) e não se apaga quem já encomendou.
+         */
+        get: operations["v1_customers_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -85,16 +176,127 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/categories/{id}/": {
+    "/api/v1/customers/{id}/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_categories_retrieve"];
-        put?: never;
+        /**
+         * @description Perfis de cliente. Não há POST nem DELETE: o perfil nasce com a primeira
+         *     encomenda (OrderViewSet.perform_create) e não se apaga quem já encomendou.
+         */
+        get: operations["v1_customers_retrieve"];
+        /**
+         * @description Perfis de cliente. Não há POST nem DELETE: o perfil nasce com a primeira
+         *     encomenda (OrderViewSet.perform_create) e não se apaga quem já encomendou.
+         */
+        put: operations["v1_customers_update"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * @description Perfis de cliente. Não há POST nem DELETE: o perfil nasce com a primeira
+         *     encomenda (OrderViewSet.perform_create) e não se apaga quem já encomendou.
+         */
+        patch: operations["v1_customers_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/deliveries/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Entregas. O gestor agenda, altera e conclui; o cliente acompanha as suas.
+         *
+         *     Não há DELETE: uma entrega fica no histórico da encomenda.
+         */
+        get: operations["v1_deliveries_list"];
+        put?: never;
+        /**
+         * @description Entregas. O gestor agenda, altera e conclui; o cliente acompanha as suas.
+         *
+         *     Não há DELETE: uma entrega fica no histórico da encomenda.
+         */
+        post: operations["v1_deliveries_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deliveries/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Entregas. O gestor agenda, altera e conclui; o cliente acompanha as suas.
+         *
+         *     Não há DELETE: uma entrega fica no histórico da encomenda.
+         */
+        get: operations["v1_deliveries_retrieve"];
+        /**
+         * @description Entregas. O gestor agenda, altera e conclui; o cliente acompanha as suas.
+         *
+         *     Não há DELETE: uma entrega fica no histórico da encomenda.
+         */
+        put: operations["v1_deliveries_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * @description Entregas. O gestor agenda, altera e conclui; o cliente acompanha as suas.
+         *
+         *     Não há DELETE: uma entrega fica no histórico da encomenda.
+         */
+        patch: operations["v1_deliveries_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/deliveries/{id}/complete/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Entregas. O gestor agenda, altera e conclui; o cliente acompanha as suas.
+         *
+         *     Não há DELETE: uma entrega fica no histórico da encomenda.
+         */
+        post: operations["v1_deliveries_complete_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/deliveries/{id}/ship/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Entregas. O gestor agenda, altera e conclui; o cliente acompanha as suas.
+         *
+         *     Não há DELETE: uma entrega fica no histórico da encomenda.
+         */
+        post: operations["v1_deliveries_ship_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -198,39 +400,115 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/products/": {
+    "/api/v1/payments/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_products_list"];
+        /** @description Pagamentos, só de leitura: um pagamento só se cria em POST /orders/{id}/pay/. */
+        get: operations["v1_payments_list"];
         put?: never;
-        post: operations["v1_products_create"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/products/{id}/": {
+    "/api/v1/payments/{id}/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get: operations["v1_products_retrieve"];
-        put: operations["v1_products_update"];
+        /** @description Pagamentos, só de leitura: um pagamento só se cria em POST /orders/{id}/pay/. */
+        get: operations["v1_payments_retrieve"];
+        put?: never;
         post?: never;
-        delete: operations["v1_products_destroy"];
+        delete?: never;
         options?: never;
         head?: never;
-        patch: operations["v1_products_partial_update"];
+        patch?: never;
         trace?: never;
     };
-    "/api/v1/reports/orders/": {
+    "/api/v1/reviews/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Avaliações de viaturas.
+         *
+         *     - anónimos: veem as aprovadas;
+         *     - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+         *     - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+         */
+        get: operations["v1_reviews_list"];
+        put?: never;
+        /**
+         * @description Avaliações de viaturas.
+         *
+         *     - anónimos: veem as aprovadas;
+         *     - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+         *     - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+         */
+        post: operations["v1_reviews_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reviews/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Avaliações de viaturas.
+         *
+         *     - anónimos: veem as aprovadas;
+         *     - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+         *     - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+         */
+        get: operations["v1_reviews_retrieve"];
+        /**
+         * @description Avaliações de viaturas.
+         *
+         *     - anónimos: veem as aprovadas;
+         *     - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+         *     - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+         */
+        put: operations["v1_reviews_update"];
+        post?: never;
+        /**
+         * @description Avaliações de viaturas.
+         *
+         *     - anónimos: veem as aprovadas;
+         *     - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+         *     - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+         */
+        delete: operations["v1_reviews_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * @description Avaliações de viaturas.
+         *
+         *     - anónimos: veem as aprovadas;
+         *     - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+         *     - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+         */
+        patch: operations["v1_reviews_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/reviews/{id}/moderate/": {
         parameters: {
             query?: never;
             header?: never;
@@ -239,25 +517,136 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Enfileira o relatório e responde logo. Quem pede fica registado como dono. */
-        post: operations["v1_reports_orders_create"];
+        /**
+         * @description Avaliações de viaturas.
+         *
+         *     - anónimos: veem as aprovadas;
+         *     - cliente: vê as aprovadas e as suas; cria, edita e apaga as suas;
+         *     - gestor: vê todas e modera (POST /reviews/{id}/moderate/).
+         */
+        post: operations["v1_reviews_moderate_create"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/tasks/{task_id}/": {
+    "/api/v1/test-drives/": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description O estado de uma tarefa. Só o dono (ou um gestor); para os outros, a tarefa não existe. */
-        get: operations["v1_tasks_retrieve"];
+        /**
+         * @description Marcações de test drive.
+         *
+         *     - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+         *     - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+         *     Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+         */
+        get: operations["v1_test_drives_list"];
+        put?: never;
+        /**
+         * @description Marcações de test drive.
+         *
+         *     - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+         *     - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+         *     Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+         */
+        post: operations["v1_test_drives_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/test-drives/{id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Marcações de test drive.
+         *
+         *     - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+         *     - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+         *     Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+         */
+        get: operations["v1_test_drives_retrieve"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/test-drives/{id}/cancel/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Marcações de test drive.
+         *
+         *     - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+         *     - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+         *     Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+         */
+        post: operations["v1_test_drives_cancel_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/test-drives/{id}/confirm/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Marcações de test drive.
+         *
+         *     - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+         *     - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+         *     Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+         */
+        post: operations["v1_test_drives_confirm_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/test-drives/{id}/decline/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Marcações de test drive.
+         *
+         *     - cliente: marca (POST), vê as suas e cancela-as (POST /{id}/cancel/);
+         *     - gestor: vê todas, confirma e recusa (POST /{id}/confirm/ e /{id}/decline/).
+         *     Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
+         */
+        post: operations["v1_test_drives_decline_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -268,41 +657,167 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        Category: {
+        Brand: {
             readonly id: number;
             name: string;
             slug: string;
         };
+        BrandRequest: {
+            name: string;
+            slug: string;
+        };
+        Car: {
+            readonly id: number;
+            brand: number;
+            readonly brand_name: string;
+            code: string;
+            model: string;
+            version?: string;
+            year: number;
+            fuel: components["schemas"]["FuelEnum"];
+            readonly fuel_display: string;
+            /** Format: decimal */
+            price: string;
+            stock?: number;
+            is_active?: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        CarRequest: {
+            brand: number;
+            code: string;
+            model: string;
+            version?: string;
+            year: number;
+            fuel: components["schemas"]["FuelEnum"];
+            /** Format: decimal */
+            price: string;
+            stock?: number;
+            is_active?: boolean;
+        };
+        Customer: {
+            readonly id: number;
+            readonly user: number;
+            readonly username: string;
+            /** Format: email */
+            readonly email: string;
+            phone?: string;
+            address?: string;
+        };
+        CustomerRequest: {
+            phone?: string;
+            address?: string;
+        };
+        Delivery: {
+            readonly id: number;
+            order: number;
+            readonly customer: number;
+            readonly status: components["schemas"]["DeliveryStatusEnum"];
+            readonly status_display: string;
+            /** Format: date-time */
+            scheduled_for: string;
+            address: string;
+            notes?: string;
+            /** Format: date-time */
+            readonly delivered_at: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        DeliveryRequest: {
+            order: number;
+            /** Format: date-time */
+            scheduled_for: string;
+            address: string;
+            notes?: string;
+        };
+        /**
+         * @description * `scheduled` - Agendada
+         *     * `in_transit` - Em trânsito
+         *     * `delivered` - Entregue
+         * @enum {string}
+         */
+        DeliveryStatusEnum: "scheduled" | "in_transit" | "delivered";
+        /**
+         * @description * `petrol` - Gasolina
+         *     * `diesel` - Gasóleo
+         *     * `hybrid` - Híbrido
+         *     * `electric` - Elétrico
+         * @enum {string}
+         */
+        FuelEnum: "petrol" | "diesel" | "hybrid" | "electric";
         Me: {
             id: number;
             username: string;
             groups: string[];
         };
+        /**
+         * @description * `transfer` - Transferência
+         *     * `financing` - Financiamento
+         *     * `card` - Cartão
+         *     * `mbway` - MB WAY
+         * @enum {string}
+         */
+        MethodEnum: "transfer" | "financing" | "card" | "mbway";
+        /** @description Corpo de POST /reviews/{id}/moderate/. */
+        ModerationRequest: {
+            status: components["schemas"]["ModerationStatusEnum"];
+        };
+        /**
+         * @description * `approved` - approved
+         *     * `hidden` - hidden
+         * @enum {string}
+         */
+        ModerationStatusEnum: "approved" | "hidden";
         Order: {
             readonly id: number;
             readonly customer: number;
-            readonly status: components["schemas"]["StatusEnum"];
+            readonly status: components["schemas"]["OrderStatusEnum"];
             /** Format: date-time */
             readonly created_at: string;
-            readonly items: components["schemas"]["OrderItem"][];
+            items: components["schemas"]["OrderLine"][];
             /** Format: decimal */
-            readonly total: string | null;
+            readonly total: string;
         };
         OrderItem: {
             readonly id: number;
             order: number;
-            product: number;
-            readonly product_name: string;
+            car: number;
+            readonly car_name: string;
             quantity: number;
             /** Format: decimal */
             readonly unit_price: string;
         };
         OrderItemRequest: {
             order: number;
-            product: number;
+            car: number;
             quantity: number;
         };
-        PaginatedCategoryList: {
+        /** @description Uma linha dentro de POST /orders/: só se envia a viatura e a quantidade. */
+        OrderLine: {
+            readonly id: number;
+            car: number;
+            readonly car_name: string;
+            quantity: number;
+            /** Format: decimal */
+            readonly unit_price: string;
+        };
+        /** @description Uma linha dentro de POST /orders/: só se envia a viatura e a quantidade. */
+        OrderLineRequest: {
+            car: number;
+            quantity: number;
+        };
+        OrderRequest: {
+            items: components["schemas"]["OrderLineRequest"][];
+        };
+        /**
+         * @description * `pending` - Pendente
+         *     * `paid` - Paga
+         *     * `delivered` - Entregue
+         *     * `cancelled` - Cancelada
+         * @enum {string}
+         */
+        OrderStatusEnum: "pending" | "paid" | "delivered" | "cancelled";
+        PaginatedBrandList: {
             /** @example 123 */
             count: number;
             /**
@@ -315,7 +830,52 @@ export interface components {
              * @example http://api.example.org/accounts/?page=2
              */
             previous?: string | null;
-            results: components["schemas"]["Category"][];
+            results: components["schemas"]["Brand"][];
+        };
+        PaginatedCarList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Car"][];
+        };
+        PaginatedCustomerList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Customer"][];
+        };
+        PaginatedDeliveryList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Delivery"][];
         };
         PaginatedOrderItemList: {
             /** @example 123 */
@@ -347,7 +907,7 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Order"][];
         };
-        PaginatedProductList: {
+        PaginatedPaymentList: {
             /** @example 123 */
             count: number;
             /**
@@ -360,66 +920,146 @@ export interface components {
              * @example http://api.example.org/accounts/?page=2
              */
             previous?: string | null;
-            results: components["schemas"]["Product"][];
+            results: components["schemas"]["Payment"][];
         };
-        PatchedOrderItemRequest: {
-            order?: number;
-            product?: number;
-            quantity?: number;
+        PaginatedReviewList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["Review"][];
         };
-        PatchedProductRequest: {
-            category?: number;
-            sku?: string;
+        PaginatedTestDriveList: {
+            /** @example 123 */
+            count: number;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=4
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?page=2
+             */
+            previous?: string | null;
+            results: components["schemas"]["TestDrive"][];
+        };
+        PatchedBrandRequest: {
             name?: string;
+            slug?: string;
+        };
+        PatchedCarRequest: {
+            brand?: number;
+            code?: string;
+            model?: string;
+            version?: string;
+            year?: number;
+            fuel?: components["schemas"]["FuelEnum"];
             /** Format: decimal */
             price?: string;
             stock?: number;
             is_active?: boolean;
         };
-        Product: {
+        PatchedCustomerRequest: {
+            phone?: string;
+            address?: string;
+        };
+        PatchedDeliveryRequest: {
+            order?: number;
+            /** Format: date-time */
+            scheduled_for?: string;
+            address?: string;
+            notes?: string;
+        };
+        PatchedOrderItemRequest: {
+            order?: number;
+            car?: number;
+            quantity?: number;
+        };
+        PatchedOrderRequest: {
+            items?: components["schemas"]["OrderLineRequest"][];
+        };
+        PatchedReviewRequest: {
+            car?: number;
+            rating?: number;
+            comment?: string;
+        };
+        /** @description Corpo de POST /orders/{id}/pay/. */
+        PayRequest: {
+            method: components["schemas"]["MethodEnum"];
+        };
+        Payment: {
             readonly id: number;
-            category: number;
-            readonly category_name: string;
-            sku: string;
-            name: string;
+            readonly order: number;
+            readonly method: components["schemas"]["MethodEnum"];
+            readonly method_display: string;
             /** Format: decimal */
-            price: string;
-            stock?: number;
-            is_active?: boolean;
+            readonly amount: string;
+            /** Format: date-time */
+            readonly paid_at: string;
+        };
+        Review: {
+            readonly id: number;
+            car: number;
+            readonly car_name: string;
+            readonly customer: number;
+            rating: number;
+            comment?: string;
+            readonly status: components["schemas"]["ReviewStatusEnum"];
+            readonly status_display: string;
             /** Format: date-time */
             readonly created_at: string;
         };
-        ProductRequest: {
-            category: number;
-            sku: string;
-            name: string;
-            /** Format: decimal */
-            price: string;
-            stock?: number;
-            is_active?: boolean;
+        ReviewRequest: {
+            car: number;
+            rating: number;
+            comment?: string;
         };
         /**
          * @description * `pending` - Pendente
-         *     * `paid` - Paga
-         *     * `shipped` - Enviada
-         *     * `cancelled` - Cancelada
+         *     * `approved` - Aprovada
+         *     * `hidden` - Oculta
          * @enum {string}
          */
-        StatusEnum: "pending" | "paid" | "shipped" | "cancelled";
-        TaskAccepted: {
-            id: string;
-            status_url: string;
+        ReviewStatusEnum: "pending" | "approved" | "hidden";
+        TestDrive: {
+            readonly id: number;
+            car: number;
+            readonly car_name: string;
+            readonly customer: number;
+            /** Format: date-time */
+            scheduled_for: string;
+            /** @default requested */
+            readonly status: components["schemas"]["TestDriveStatusEnum"];
+            readonly status_display: string;
+            notes?: string;
+            /** Format: date-time */
+            readonly created_at: string;
         };
-        TaskStatus: {
-            id: string;
-            state: string;
-            progress: {
-                [key: string]: unknown;
-            } | null;
-            result: {
-                [key: string]: unknown;
-            } | null;
-            error: string | null;
+        TestDriveRequest: {
+            car: number;
+            /** Format: date-time */
+            scheduled_for: string;
+            notes?: string;
+        };
+        /**
+         * @description * `requested` - Pedido
+         *     * `confirmed` - Confirmado
+         *     * `declined` - Recusado
+         *     * `cancelled` - Cancelado
+         * @enum {string}
+         */
+        TestDriveStatusEnum: "requested" | "confirmed" | "declined" | "cancelled";
+        TokenBlacklistRequest: {
+            refresh: string;
         };
         TokenObtainPair: {
             readonly access: string;
@@ -478,6 +1118,30 @@ export interface operations {
             };
         };
     };
+    v1_auth_logout_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenBlacklistRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["TokenBlacklistRequest"];
+                "multipart/form-data": components["schemas"]["TokenBlacklistRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     v1_auth_token_create: {
         parameters: {
             query?: never;
@@ -528,7 +1192,7 @@ export interface operations {
             };
         };
     };
-    v1_categories_list: {
+    v1_brands_list: {
         parameters: {
             query?: {
                 /** @description Which field to use when ordering the results. */
@@ -549,17 +1213,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedCategoryList"];
+                    "application/json": components["schemas"]["PaginatedBrandList"];
                 };
             };
         };
     };
-    v1_categories_retrieve: {
+    v1_brands_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["BrandRequest"];
+                "multipart/form-data": components["schemas"]["BrandRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Brand"];
+                };
+            };
+        };
+    };
+    v1_brands_retrieve: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description A unique integer value identifying this category. */
+                /** @description A unique integer value identifying this brand. */
                 id: number;
             };
             cookie?: never;
@@ -571,8 +1260,546 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Category"];
+                    "application/json": components["schemas"]["Brand"];
                 };
+            };
+        };
+    };
+    v1_brands_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this brand. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["BrandRequest"];
+                "multipart/form-data": components["schemas"]["BrandRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Brand"];
+                };
+            };
+        };
+    };
+    v1_brands_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this brand. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_brands_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this brand. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedBrandRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedBrandRequest"];
+                "multipart/form-data": components["schemas"]["PatchedBrandRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Brand"];
+                };
+            };
+        };
+    };
+    v1_cars_list: {
+        parameters: {
+            query?: {
+                brand?: number;
+                /**
+                 * @description * `petrol` - Gasolina
+                 *     * `diesel` - Gasóleo
+                 *     * `hybrid` - Híbrido
+                 *     * `electric` - Elétrico
+                 */
+                fuel?: "diesel" | "electric" | "hybrid" | "petrol";
+                is_active?: boolean;
+                max_price?: number;
+                max_year?: number;
+                min_price?: number;
+                min_year?: number;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description A search term. */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedCarList"];
+                };
+            };
+        };
+    };
+    v1_cars_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CarRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["CarRequest"];
+                "multipart/form-data": components["schemas"]["CarRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Car"];
+                };
+            };
+        };
+    };
+    v1_cars_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this car. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Car"];
+                };
+            };
+        };
+    };
+    v1_cars_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this car. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CarRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["CarRequest"];
+                "multipart/form-data": components["schemas"]["CarRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Car"];
+                };
+            };
+        };
+    };
+    v1_cars_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this car. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_cars_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this car. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedCarRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedCarRequest"];
+                "multipart/form-data": components["schemas"]["PatchedCarRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Car"];
+                };
+            };
+        };
+    };
+    v1_customers_list: {
+        parameters: {
+            query?: {
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description A search term. */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedCustomerList"];
+                };
+            };
+        };
+    };
+    v1_customers_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this customer. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Customer"];
+                };
+            };
+        };
+    };
+    v1_customers_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this customer. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CustomerRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["CustomerRequest"];
+                "multipart/form-data": components["schemas"]["CustomerRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Customer"];
+                };
+            };
+        };
+    };
+    v1_customers_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this customer. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedCustomerRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedCustomerRequest"];
+                "multipart/form-data": components["schemas"]["PatchedCustomerRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Customer"];
+                };
+            };
+        };
+    };
+    v1_deliveries_list: {
+        parameters: {
+            query?: {
+                order?: number;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description A search term. */
+                search?: string;
+                /**
+                 * @description * `scheduled` - Agendada
+                 *     * `in_transit` - Em trânsito
+                 *     * `delivered` - Entregue
+                 */
+                status?: "delivered" | "in_transit" | "scheduled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedDeliveryList"];
+                };
+            };
+        };
+    };
+    v1_deliveries_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliveryRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DeliveryRequest"];
+                "multipart/form-data": components["schemas"]["DeliveryRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Delivery"];
+                };
+            };
+        };
+    };
+    v1_deliveries_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this delivery. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Delivery"];
+                };
+            };
+        };
+    };
+    v1_deliveries_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this delivery. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliveryRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["DeliveryRequest"];
+                "multipart/form-data": components["schemas"]["DeliveryRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Delivery"];
+                };
+            };
+        };
+    };
+    v1_deliveries_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this delivery. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedDeliveryRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedDeliveryRequest"];
+                "multipart/form-data": components["schemas"]["PatchedDeliveryRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Delivery"];
+                };
+            };
+        };
+    };
+    v1_deliveries_complete_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this delivery. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Delivery"];
+                };
+            };
+            /** @description O estado da entrega ou da encomenda não o permite. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_deliveries_ship_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this delivery. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Delivery"];
+                };
+            };
+            /** @description O estado da entrega ou da encomenda não o permite. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -759,10 +1986,10 @@ export interface operations {
                 /**
                  * @description * `pending` - Pendente
                  *     * `paid` - Paga
-                 *     * `shipped` - Enviada
+                 *     * `delivered` - Entregue
                  *     * `cancelled` - Cancelada
                  */
-                status?: "cancelled" | "paid" | "pending" | "shipped";
+                status?: "cancelled" | "delivered" | "paid" | "pending";
             };
             header?: never;
             path?: never;
@@ -787,7 +2014,13 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["OrderRequest"];
+                "multipart/form-data": components["schemas"]["OrderRequest"];
+            };
+        };
         responses: {
             201: {
                 headers: {
@@ -831,7 +2064,13 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["OrderRequest"];
+                "multipart/form-data": components["schemas"]["OrderRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -874,7 +2113,13 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedOrderRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedOrderRequest"];
+                "multipart/form-data": components["schemas"]["PatchedOrderRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -896,7 +2141,13 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PayRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PayRequest"];
+                "multipart/form-data": components["schemas"]["PayRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
@@ -906,7 +2157,7 @@ export interface operations {
                     "application/json": components["schemas"]["Order"];
                 };
             };
-            /** @description A encomenda já não está pendente. */
+            /** @description A encomenda já não está pendente ou não tem linhas. */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -915,13 +2166,17 @@ export interface operations {
             };
         };
     };
-    v1_products_list: {
+    v1_payments_list: {
         parameters: {
             query?: {
-                category?: number;
-                is_active?: boolean;
-                max_price?: number;
-                min_price?: number;
+                /**
+                 * @description * `transfer` - Transferência
+                 *     * `financing` - Financiamento
+                 *     * `card` - Cartão
+                 *     * `mbway` - MB WAY
+                 */
+                method?: "card" | "financing" | "mbway" | "transfer";
+                order?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description A page number within the paginated result set. */
@@ -940,42 +2195,17 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedProductList"];
+                    "application/json": components["schemas"]["PaginatedPaymentList"];
                 };
             };
         };
     };
-    v1_products_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ProductRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["ProductRequest"];
-                "multipart/form-data": components["schemas"]["ProductRequest"];
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Product"];
-                };
-            };
-        };
-    };
-    v1_products_retrieve: {
+    v1_payments_retrieve: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description A unique integer value identifying this product. */
+                /** @description A unique integer value identifying this payment. */
                 id: number;
             };
             cookie?: never;
@@ -987,26 +2217,107 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Product"];
+                    "application/json": components["schemas"]["Payment"];
                 };
             };
         };
     };
-    v1_products_update: {
+    v1_reviews_list: {
+        parameters: {
+            query?: {
+                car?: number;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                rating?: number;
+                /** @description A search term. */
+                search?: string;
+                /**
+                 * @description * `pending` - Pendente
+                 *     * `approved` - Aprovada
+                 *     * `hidden` - Oculta
+                 */
+                status?: "approved" | "hidden" | "pending";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedReviewList"];
+                };
+            };
+        };
+    };
+    v1_reviews_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ReviewRequest"];
+                "multipart/form-data": components["schemas"]["ReviewRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Review"];
+                };
+            };
+        };
+    };
+    v1_reviews_retrieve: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description A unique integer value identifying this product. */
+                /** @description A unique integer value identifying this review. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Review"];
+                };
+            };
+        };
+    };
+    v1_reviews_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this review. */
                 id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ProductRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["ProductRequest"];
-                "multipart/form-data": components["schemas"]["ProductRequest"];
+                "application/json": components["schemas"]["ReviewRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ReviewRequest"];
+                "multipart/form-data": components["schemas"]["ReviewRequest"];
             };
         };
         responses: {
@@ -1015,17 +2326,17 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Product"];
+                    "application/json": components["schemas"]["Review"];
                 };
             };
         };
     };
-    v1_products_destroy: {
+    v1_reviews_destroy: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description A unique integer value identifying this product. */
+                /** @description A unique integer value identifying this review. */
                 id: number;
             };
             cookie?: never;
@@ -1041,21 +2352,21 @@ export interface operations {
             };
         };
     };
-    v1_products_partial_update: {
+    v1_reviews_partial_update: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description A unique integer value identifying this product. */
+                /** @description A unique integer value identifying this review. */
                 id: number;
             };
             cookie?: never;
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["PatchedProductRequest"];
-                "application/x-www-form-urlencoded": components["schemas"]["PatchedProductRequest"];
-                "multipart/form-data": components["schemas"]["PatchedProductRequest"];
+                "application/json": components["schemas"]["PatchedReviewRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["PatchedReviewRequest"];
+                "multipart/form-data": components["schemas"]["PatchedReviewRequest"];
             };
         };
         responses: {
@@ -1064,36 +2375,105 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Product"];
+                    "application/json": components["schemas"]["Review"];
                 };
             };
         };
     };
-    v1_reports_orders_create: {
+    v1_reviews_moderate_create: {
         parameters: {
             query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this review. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModerationRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["ModerationRequest"];
+                "multipart/form-data": components["schemas"]["ModerationRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Review"];
+                };
+            };
+        };
+    };
+    v1_test_drives_list: {
+        parameters: {
+            query?: {
+                car?: number;
+                /** @description Which field to use when ordering the results. */
+                ordering?: string;
+                /** @description A page number within the paginated result set. */
+                page?: number;
+                /** @description A search term. */
+                search?: string;
+                /**
+                 * @description * `requested` - Pedido
+                 *     * `confirmed` - Confirmado
+                 *     * `declined` - Recusado
+                 *     * `cancelled` - Cancelado
+                 */
+                status?: "cancelled" | "confirmed" | "declined" | "requested";
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            202: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TaskAccepted"];
+                    "application/json": components["schemas"]["PaginatedTestDriveList"];
                 };
             };
         };
     };
-    v1_tasks_retrieve: {
+    v1_test_drives_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestDriveRequest"];
+                "application/x-www-form-urlencoded": components["schemas"]["TestDriveRequest"];
+                "multipart/form-data": components["schemas"]["TestDriveRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestDrive"];
+                };
+            };
+        };
+    };
+    v1_test_drives_retrieve: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                task_id: string;
+                /** @description A unique integer value identifying this test drive. */
+                id: number;
             };
             cookie?: never;
         };
@@ -1104,11 +2484,91 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TaskStatus"];
+                    "application/json": components["schemas"]["TestDrive"];
                 };
             };
-            /** @description Tarefa desconhecida, expirada ou de outro. */
-            404: {
+        };
+    };
+    v1_test_drives_cancel_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this test drive. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestDrive"];
+                };
+            };
+            /** @description O estado atual do test drive não o permite. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_test_drives_confirm_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this test drive. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestDrive"];
+                };
+            };
+            /** @description O estado atual do test drive não o permite. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    v1_test_drives_decline_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description A unique integer value identifying this test drive. */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestDrive"];
+                };
+            };
+            /** @description O estado atual do test drive não o permite. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

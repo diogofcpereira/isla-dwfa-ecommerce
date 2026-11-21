@@ -67,7 +67,13 @@ REST_FRAMEWORK = {
     },
 }
 
-SPECTACULAR_SETTINGS = {"TITLE": "DriveNow API", "VERSION": "1.1.0"}
+SPECTACULAR_SETTINGS = {
+    "TITLE": "DriveNow API",
+    "VERSION": "2.0.0",  # M2: a SPA passa a gerar os tipos a partir deste schema
+    # M2: um componente para o pedido (…Request) e outro para a resposta, para o
+    # openapi-typescript saber que id, status, total… só existem na resposta.
+    "COMPONENT_SPLIT_REQUEST": True,
+}
 
 MIDDLEWARE = [
     # Ficha 03 · Parte 3: TEM de ser o primeiro — o preflight OPTIONS não traz token

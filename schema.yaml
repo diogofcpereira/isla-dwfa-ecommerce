@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: DriveNow API
-  version: 1.1.0
+  version: 2.0.0
 paths:
   /api/schema/:
     get:
@@ -164,21 +164,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TokenBlacklist'
+              $ref: '#/components/schemas/TokenBlacklistRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TokenBlacklist'
+              $ref: '#/components/schemas/TokenBlacklistRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/TokenBlacklist'
+              $ref: '#/components/schemas/TokenBlacklistRequest'
         required: true
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TokenBlacklist'
-          description: ''
+          description: No response body
   /api/v1/auth/token/:
     post:
       operationId: v1_auth_token_create
@@ -194,13 +190,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TokenObtainPair'
+              $ref: '#/components/schemas/TokenObtainPairRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TokenObtainPair'
+              $ref: '#/components/schemas/TokenObtainPairRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/TokenObtainPair'
+              $ref: '#/components/schemas/TokenObtainPairRequest'
         required: true
       responses:
         '200':
@@ -221,13 +217,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TokenRefresh'
+              $ref: '#/components/schemas/TokenRefreshRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TokenRefresh'
+              $ref: '#/components/schemas/TokenRefreshRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/TokenRefresh'
+              $ref: '#/components/schemas/TokenRefreshRequest'
         required: true
       responses:
         '200':
@@ -278,13 +274,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Brand'
+              $ref: '#/components/schemas/BrandRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Brand'
+              $ref: '#/components/schemas/BrandRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Brand'
+              $ref: '#/components/schemas/BrandRequest'
         required: true
       security:
       - jwtAuth: []
@@ -333,13 +329,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Brand'
+              $ref: '#/components/schemas/BrandRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Brand'
+              $ref: '#/components/schemas/BrandRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Brand'
+              $ref: '#/components/schemas/BrandRequest'
         required: true
       security:
       - jwtAuth: []
@@ -366,13 +362,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedBrand'
+              $ref: '#/components/schemas/PatchedBrandRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedBrand'
+              $ref: '#/components/schemas/PatchedBrandRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedBrand'
+              $ref: '#/components/schemas/PatchedBrandRequest'
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -480,13 +476,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Car'
+              $ref: '#/components/schemas/CarRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Car'
+              $ref: '#/components/schemas/CarRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Car'
+              $ref: '#/components/schemas/CarRequest'
         required: true
       security:
       - jwtAuth: []
@@ -535,13 +531,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Car'
+              $ref: '#/components/schemas/CarRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Car'
+              $ref: '#/components/schemas/CarRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Car'
+              $ref: '#/components/schemas/CarRequest'
         required: true
       security:
       - jwtAuth: []
@@ -568,13 +564,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedCar'
+              $ref: '#/components/schemas/PatchedCarRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedCar'
+              $ref: '#/components/schemas/PatchedCarRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedCar'
+              $ref: '#/components/schemas/PatchedCarRequest'
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -682,13 +678,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Customer'
+              $ref: '#/components/schemas/CustomerRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Customer'
+              $ref: '#/components/schemas/CustomerRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Customer'
+              $ref: '#/components/schemas/CustomerRequest'
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -717,13 +713,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedCustomer'
+              $ref: '#/components/schemas/PatchedCustomerRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedCustomer'
+              $ref: '#/components/schemas/PatchedCustomerRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedCustomer'
+              $ref: '#/components/schemas/PatchedCustomerRequest'
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -800,13 +796,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Delivery'
+              $ref: '#/components/schemas/DeliveryRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Delivery'
+              $ref: '#/components/schemas/DeliveryRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Delivery'
+              $ref: '#/components/schemas/DeliveryRequest'
         required: true
       security:
       - jwtAuth: []
@@ -863,13 +859,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Delivery'
+              $ref: '#/components/schemas/DeliveryRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Delivery'
+              $ref: '#/components/schemas/DeliveryRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Delivery'
+              $ref: '#/components/schemas/DeliveryRequest'
         required: true
       security:
       - jwtAuth: []
@@ -900,13 +896,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedDelivery'
+              $ref: '#/components/schemas/PatchedDeliveryRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedDelivery'
+              $ref: '#/components/schemas/PatchedDeliveryRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedDelivery'
+              $ref: '#/components/schemas/PatchedDeliveryRequest'
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -1036,13 +1032,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderItem'
+              $ref: '#/components/schemas/OrderItemRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/OrderItem'
+              $ref: '#/components/schemas/OrderItemRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/OrderItem'
+              $ref: '#/components/schemas/OrderItemRequest'
         required: true
       security:
       - jwtAuth: []
@@ -1091,13 +1087,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/OrderItem'
+              $ref: '#/components/schemas/OrderItemRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/OrderItem'
+              $ref: '#/components/schemas/OrderItemRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/OrderItem'
+              $ref: '#/components/schemas/OrderItemRequest'
         required: true
       security:
       - jwtAuth: []
@@ -1124,13 +1120,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedOrderItem'
+              $ref: '#/components/schemas/PatchedOrderItemRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedOrderItem'
+              $ref: '#/components/schemas/PatchedOrderItemRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedOrderItem'
+              $ref: '#/components/schemas/PatchedOrderItemRequest'
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -1218,13 +1214,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Order'
+              $ref: '#/components/schemas/OrderRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Order'
+              $ref: '#/components/schemas/OrderRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Order'
+              $ref: '#/components/schemas/OrderRequest'
         required: true
       security:
       - jwtAuth: []
@@ -1273,13 +1269,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Order'
+              $ref: '#/components/schemas/OrderRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Order'
+              $ref: '#/components/schemas/OrderRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Order'
+              $ref: '#/components/schemas/OrderRequest'
         required: true
       security:
       - jwtAuth: []
@@ -1306,13 +1302,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedOrder'
+              $ref: '#/components/schemas/PatchedOrderRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedOrder'
+              $ref: '#/components/schemas/PatchedOrderRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedOrder'
+              $ref: '#/components/schemas/PatchedOrderRequest'
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -1356,13 +1352,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Pay'
+              $ref: '#/components/schemas/PayRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Pay'
+              $ref: '#/components/schemas/PayRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Pay'
+              $ref: '#/components/schemas/PayRequest'
         required: true
       security:
       - jwtAuth: []
@@ -1527,13 +1523,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Review'
+              $ref: '#/components/schemas/ReviewRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Review'
+              $ref: '#/components/schemas/ReviewRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Review'
+              $ref: '#/components/schemas/ReviewRequest'
         required: true
       security:
       - jwtAuth: []
@@ -1595,13 +1591,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Review'
+              $ref: '#/components/schemas/ReviewRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Review'
+              $ref: '#/components/schemas/ReviewRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Review'
+              $ref: '#/components/schemas/ReviewRequest'
         required: true
       security:
       - jwtAuth: []
@@ -1634,13 +1630,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedReview'
+              $ref: '#/components/schemas/PatchedReviewRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedReview'
+              $ref: '#/components/schemas/PatchedReviewRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedReview'
+              $ref: '#/components/schemas/PatchedReviewRequest'
       security:
       - jwtAuth: []
       - cookieAuth: []
@@ -1696,13 +1692,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Moderation'
+              $ref: '#/components/schemas/ModerationRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Moderation'
+              $ref: '#/components/schemas/ModerationRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Moderation'
+              $ref: '#/components/schemas/ModerationRequest'
         required: true
       security:
       - jwtAuth: []
@@ -1786,13 +1782,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TestDrive'
+              $ref: '#/components/schemas/TestDriveRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TestDrive'
+              $ref: '#/components/schemas/TestDriveRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/TestDrive'
+              $ref: '#/components/schemas/TestDriveRequest'
         required: true
       security:
       - jwtAuth: []
@@ -1941,6 +1937,21 @@ components:
       - id
       - name
       - slug
+    BrandRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 80
+          pattern: ^[-a-zA-Z0-9_]+$
+      required:
+      - name
+      - slug
     Car:
       type: object
       properties:
@@ -1995,6 +2006,45 @@ components:
       - model
       - price
       - year
+    CarRequest:
+      type: object
+      properties:
+        brand:
+          type: integer
+        code:
+          type: string
+          minLength: 1
+          maxLength: 32
+        model:
+          type: string
+          minLength: 1
+          maxLength: 80
+        version:
+          type: string
+          maxLength: 80
+        year:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        fuel:
+          $ref: '#/components/schemas/FuelEnum'
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        stock:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+      required:
+      - brand
+      - code
+      - fuel
+      - model
+      - price
+      - year
     Customer:
       type: object
       properties:
@@ -2021,6 +2071,14 @@ components:
       - id
       - user
       - username
+    CustomerRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+          maxLength: 20
+        address:
+          type: string
     Delivery:
       type: object
       properties:
@@ -2066,6 +2124,24 @@ components:
       - scheduled_for
       - status
       - status_display
+    DeliveryRequest:
+      type: object
+      properties:
+        order:
+          type: integer
+        scheduled_for:
+          type: string
+          format: date-time
+        address:
+          type: string
+          minLength: 1
+          maxLength: 255
+        notes:
+          type: string
+      required:
+      - address
+      - order
+      - scheduled_for
     DeliveryStatusEnum:
       enum:
       - scheduled
@@ -2115,7 +2191,7 @@ components:
         * `financing` - Financiamento
         * `card` - Cartão
         * `mbway` - MB WAY
-    Moderation:
+    ModerationRequest:
       type: object
       description: Corpo de POST /reviews/{id}/moderate/.
       properties:
@@ -2193,6 +2269,21 @@ components:
       - order
       - quantity
       - unit_price
+    OrderItemRequest:
+      type: object
+      properties:
+        order:
+          type: integer
+        car:
+          type: integer
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+      required:
+      - car
+      - order
+      - quantity
     OrderLine:
       type: object
       description: 'Uma linha dentro de POST /orders/: só se envia a viatura e a quantidade.'
@@ -2220,6 +2311,28 @@ components:
       - id
       - quantity
       - unit_price
+    OrderLineRequest:
+      type: object
+      description: 'Uma linha dentro de POST /orders/: só se envia a viatura e a quantidade.'
+      properties:
+        car:
+          type: integer
+        quantity:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+      required:
+      - car
+      - quantity
+    OrderRequest:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLineRequest'
+      required:
+      - items
     OrderStatusEnum:
       enum:
       - pending
@@ -2439,35 +2552,30 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TestDrive'
-    PatchedBrand:
+    PatchedBrandRequest:
       type: object
       properties:
-        id:
-          type: integer
-          readOnly: true
         name:
           type: string
+          minLength: 1
           maxLength: 80
         slug:
           type: string
+          minLength: 1
           maxLength: 80
           pattern: ^[-a-zA-Z0-9_]+$
-    PatchedCar:
+    PatchedCarRequest:
       type: object
       properties:
-        id:
-          type: integer
-          readOnly: true
         brand:
           type: integer
-        brand_name:
-          type: string
-          readOnly: true
         code:
           type: string
+          minLength: 1
           maxLength: 32
         model:
           type: string
+          minLength: 1
           maxLength: 80
         version:
           type: string
@@ -2478,9 +2586,6 @@ components:
           minimum: 0
         fuel:
           $ref: '#/components/schemas/FuelEnum'
-        fuel_display:
-          type: string
-          readOnly: true
         price:
           type: string
           format: decimal
@@ -2491,146 +2596,58 @@ components:
           minimum: 0
         is_active:
           type: boolean
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-    PatchedCustomer:
+    PatchedCustomerRequest:
       type: object
       properties:
-        id:
-          type: integer
-          readOnly: true
-        user:
-          type: integer
-          readOnly: true
-        username:
-          type: string
-          readOnly: true
-        email:
-          type: string
-          format: email
-          readOnly: true
         phone:
           type: string
           maxLength: 20
         address:
           type: string
-    PatchedDelivery:
+    PatchedDeliveryRequest:
       type: object
       properties:
-        id:
-          type: integer
-          readOnly: true
         order:
           type: integer
-        customer:
-          type: integer
-          readOnly: true
-        status:
-          allOf:
-          - $ref: '#/components/schemas/DeliveryStatusEnum'
-          readOnly: true
-        status_display:
-          type: string
-          readOnly: true
         scheduled_for:
           type: string
           format: date-time
         address:
           type: string
+          minLength: 1
           maxLength: 255
         notes:
           type: string
-        delivered_at:
-          type: string
-          format: date-time
-          readOnly: true
-          nullable: true
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-    PatchedOrder:
+    PatchedOrderItemRequest:
       type: object
       properties:
-        id:
-          type: integer
-          readOnly: true
-        customer:
-          type: integer
-          readOnly: true
-        status:
-          allOf:
-          - $ref: '#/components/schemas/OrderStatusEnum'
-          readOnly: true
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/OrderLine'
-        total:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
-          readOnly: true
-    PatchedOrderItem:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
         order:
           type: integer
         car:
           type: integer
-        car_name:
-          type: string
-          readOnly: true
         quantity:
           type: integer
           maximum: 2147483647
           minimum: 0
-        unit_price:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          readOnly: true
-    PatchedReview:
+    PatchedOrderRequest:
       type: object
       properties:
-        id:
-          type: integer
-          readOnly: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLineRequest'
+    PatchedReviewRequest:
+      type: object
+      properties:
         car:
           type: integer
-        car_name:
-          type: string
-          readOnly: true
-        customer:
-          type: integer
-          readOnly: true
         rating:
           type: integer
           maximum: 32767
           minimum: 0
         comment:
           type: string
-        status:
-          allOf:
-          - $ref: '#/components/schemas/ReviewStatusEnum'
-          readOnly: true
-        status_display:
-          type: string
-          readOnly: true
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-    Pay:
+    PayRequest:
       type: object
       description: Corpo de POST /orders/{id}/pay/.
       properties:
@@ -2710,6 +2727,20 @@ components:
       - rating
       - status
       - status_display
+    ReviewRequest:
+      type: object
+      properties:
+        car:
+          type: integer
+        rating:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        comment:
+          type: string
+      required:
+      - car
+      - rating
     ReviewStatusEnum:
       enum:
       - pending
@@ -2760,6 +2791,19 @@ components:
       - scheduled_for
       - status
       - status_display
+    TestDriveRequest:
+      type: object
+      properties:
+        car:
+          type: integer
+        scheduled_for:
+          type: string
+          format: date-time
+        notes:
+          type: string
+      required:
+      - car
+      - scheduled_for
     TestDriveStatusEnum:
       enum:
       - requested
@@ -2772,23 +2816,18 @@ components:
         * `confirmed` - Confirmado
         * `declined` - Recusado
         * `cancelled` - Cancelado
-    TokenBlacklist:
+    TokenBlacklistRequest:
       type: object
       properties:
         refresh:
           type: string
           writeOnly: true
+          minLength: 1
       required:
       - refresh
     TokenObtainPair:
       type: object
       properties:
-        username:
-          type: string
-          writeOnly: true
-        password:
-          type: string
-          writeOnly: true
         access:
           type: string
           readOnly: true
@@ -2797,8 +2836,20 @@ components:
           readOnly: true
       required:
       - access
-      - password
       - refresh
+    TokenObtainPairRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
       - username
     TokenRefresh:
       type: object
@@ -2810,6 +2861,14 @@ components:
           type: string
       required:
       - access
+      - refresh
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          minLength: 1
+      required:
       - refresh
   securitySchemes:
     cookieAuth:

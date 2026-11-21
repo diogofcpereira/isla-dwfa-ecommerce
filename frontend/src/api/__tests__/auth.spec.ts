@@ -73,7 +73,7 @@ describe('authMiddleware', () => {
     const auth = useAuth()
     auth.access = 'A'
 
-    useFetch(() => unwrap(api.GET('/api/v1/products/')))
+    useFetch(() => unwrap(api.GET('/api/v1/cars/')))
     await flushPromises()
     expect(fetch).toHaveBeenCalledTimes(1)
 
