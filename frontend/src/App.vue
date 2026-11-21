@@ -26,6 +26,7 @@ watch(
     <nav aria-label="Principal">
       <RouterLink :to="{ name: 'cars' }">Viaturas</RouterLink>
       <template v-if="auth.isLoggedIn">
+        <RouterLink :to="{ name: 'orders' }">Encomendas</RouterLink>
         <span class="who">
           {{ auth.user?.username }}<template v-if="auth.isGestor"> · gestor</template>
         </span>
