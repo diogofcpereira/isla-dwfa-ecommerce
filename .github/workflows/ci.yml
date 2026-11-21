@@ -5,6 +5,7 @@ on:
   pull_request:
 
 jobs:
+  # Backend (M1): o nome "test" fica igual — é o check obrigatório da proteção do main.
   test:
     runs-on: ubuntu-latest
     services:
@@ -34,3 +35,23 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run python manage.py makemigrations --check --dry-run
       - run: uv run pytest
+
+  # Frontend (M2): tipos, lint, formatação, testes e build da SPA.
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run type-check
+      - run: npm run check:lint
+      - run: npm run check:format
+      - run: npm run test:ci
+      - run: npm run build-only
