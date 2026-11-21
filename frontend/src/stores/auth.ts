@@ -1,6 +1,7 @@
 // src/stores/auth.ts — a sessão: quem está autenticado e com que tokens.
-// Decisão (Aula 04 / Ficha 03): o access (30 min) só em memória; o refresh (1 dia,
-// roda a cada uso e vai para a blacklist) no localStorage, para sobreviver ao F5.
+// Decisão (Ficha 04 → M2): o access (30 min) só em memória; o refresh (1 dia, roda a cada
+// uso e vai para a blacklist) no localStorage, para sobreviver ao F5.
+// M2: "Sair" põe o refresh na blacklist da API (POST /auth/logout/ do M1), não só o apaga.
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 
@@ -47,15 +48,30 @@ export const useAuth = defineStore('auth', () => {
     try {
       user.value = await unwrap(api.GET('/api/v1/me/'))
     } catch (e) {
-      logout() // sem utilizador não há sessão: não deixar tokens soltos
+      clearSession() // sem utilizador não há sessão: não deixar tokens soltos
       throw e
     }
   }
 
-  function logout() {
+  /** Esquece a sessão neste browser (sem falar com a API). */
+  function clearSession() {
     access.value = null
     setRefresh(null)
     user.value = null
+  }
+
+  /**
+   * "Sair": limpa a sessão já (o ecrã reage logo) e pede à API para pôr o refresh na
+   * blacklist. Se a API não responder, o refresh fica inútil quando expirar (1 dia).
+   */
+  function logout() {
+    const current = refresh.value
+    clearSession()
+    if (current) {
+      api.POST('/api/v1/auth/logout/', { body: { refresh: current } }).catch(() => {
+        // Sem rede: a sessão local já acabou; não há nada a mostrar ao utilizador.
+      })
+    }
   }
 
   // Se dois pedidos receberem 401 ao mesmo tempo, os dois esperam pela MESMA renovação.
@@ -63,7 +79,7 @@ export const useAuth = defineStore('auth', () => {
   // porque a primeira já o pôs na blacklist (ROTATE_REFRESH_TOKENS + BLACKLIST_AFTER_ROTATION).
   let renewing: Promise<string | null> | null = null
 
-  /** Pede um access novo com o refresh guardado. Devolve-o, ou null (e faz logout) se falhar. */
+  /** Pede um access novo com o refresh guardado. Devolve-o, ou null (e limpa a sessão). */
   function refreshAccess(): Promise<string | null> {
     renewing ??= (async () => {
       try {
@@ -71,14 +87,14 @@ export const useAuth = defineStore('auth', () => {
         // (e o que este separador tem em memória já estaria na blacklist).
         const current = localStorage.getItem(REFRESH_KEY)
         if (!current) {
-          logout()
+          clearSession()
           return null
         }
         const { data } = await api.POST('/api/v1/auth/token/refresh/', {
           body: { refresh: current },
         })
         if (!data) {
-          logout() // refresh expirado ou na blacklist: a sessão acabou
+          clearSession() // refresh expirado ou na blacklist: a sessão acabou
           return null
         }
         access.value = data.access

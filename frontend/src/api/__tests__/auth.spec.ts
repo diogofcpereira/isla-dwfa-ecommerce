@@ -1,4 +1,4 @@
-// src/api/__tests__/auth.spec.ts — o middleware: 401 → renovar UMA vez → repetir.
+// src/api/__tests__/auth.spec.ts — o middleware: 401 -> renovar UMA vez -> repetir.
 import { flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -78,9 +78,12 @@ describe('authMiddleware', () => {
     expect(fetch).toHaveBeenCalledTimes(1)
 
     auth.access = 'B' // como numa renovação
-    auth.logout() // e como ao sair
+    auth.logout() // e como ao sair (este faz um POST /auth/logout/, que não conta)
     await nextTick()
     await flushPromises()
-    expect(fetch).toHaveBeenCalledTimes(1) // continua 1
+    const lists = fetch.mock.calls.filter(
+      ([request]) => new URL((request as Request).url).pathname === '/api/v1/cars/',
+    )
+    expect(lists).toHaveLength(1) // a lista continua a ter sido pedida só 1 vez
   })
 })

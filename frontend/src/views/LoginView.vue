@@ -15,13 +15,11 @@ const password = ref('')
 const submitting = ref(false)
 const error = ref<string | null>(null)
 
-// Para onde voltar depois do login (?next=/orders). Só caminhos internos: um
+// Para onde voltar depois do login (?next=/test-drives). Só caminhos internos: um
 // ?next=https://outro-site.com seria um "open redirect".
 function nextPath(): string {
   const next = route.query.next
-  return typeof next === 'string' && next.startsWith('/') && !next.startsWith('//')
-    ? next
-    : '/orders'
+  return typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') ? next : '/cars'
 }
 
 async function submit() {

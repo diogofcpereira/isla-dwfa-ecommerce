@@ -4,9 +4,9 @@ import type { Middleware } from 'openapi-fetch'
 
 import { useAuth } from '@/stores/auth'
 
-// O login e a renovação não levam Bearer nem são repetidos (senão um 401 do refresh
-// pedia outro refresh… em loop).
-const SKIP = ['/api/v1/auth/token/', '/api/v1/auth/token/refresh/']
+// O login, a renovação e o logout não levam Bearer nem são repetidos (senão um 401 do
+// refresh pedia outro refresh… em loop). O logout só precisa do refresh no corpo.
+const SKIP = ['/api/v1/auth/token/', '/api/v1/auth/token/refresh/', '/api/v1/auth/logout/']
 
 // Uma cópia de cada pedido, guardada antes de ser enviado: o corpo de um Request só se
 // pode ler uma vez, por isso a repetição precisa da cópia.
@@ -27,7 +27,7 @@ export const authMiddleware: Middleware = {
     copies.delete(id)
     if (response.status !== 401 || !retry) return response
 
-    const access = await useAuth().refreshAccess() // em caso de falha já fez logout()
+    const access = await useAuth().refreshAccess() // se falhar, já limpou a sessão
     if (!access) return response // devolve o 401 original; o App.vue manda para /login
 
     retry.headers.set('Authorization', `Bearer ${access}`)

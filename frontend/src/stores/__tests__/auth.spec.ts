@@ -1,8 +1,10 @@
 // src/stores/__tests__/auth.spec.ts — a store, sem rede: o fetch é substituído por vi.fn().
+import { flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { ApiError } from '@/api/client'
+import { authMiddleware } from '@/api/auth'
+import { ApiError, api } from '@/api/client'
 import { useAuth } from '@/stores/auth'
 
 // Uma resposta JSON falsa, como a API a daria.
@@ -13,6 +15,9 @@ const json = (body: unknown, status = 200) =>
   })
 
 describe('store auth', () => {
+  beforeAll(() => {
+    api.use(authMiddleware) // como no main.ts: confirma que o logout não leva Bearer
+  })
   beforeEach(() => {
     localStorage.clear()
     setActivePinia(createPinia()) // uma store nova em cada teste
@@ -57,12 +62,38 @@ describe('store auth', () => {
     expect(localStorage.getItem('refresh')).toBeNull()
   })
 
-  it('logout() limpa o estado e o localStorage', async () => {
+  it('logout() limpa a sessão e põe o refresh na blacklist da API', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValueOnce(json({}))
+    vi.stubGlobal('fetch', fetch)
     localStorage.setItem('refresh', 'R0')
     const auth = useAuth()
+    auth.access = 'A0'
+
     auth.logout()
 
+    // O ecrã reage logo: a sessão local acaba antes de a API responder.
+    expect(auth.access).toBeNull()
     expect(auth.refresh).toBeNull()
+    expect(localStorage.getItem('refresh')).toBeNull()
+    await flushPromises()
+    const request = fetch.mock.calls[0]?.[0] as Request
+    expect(new URL(request.url).pathname).toBe('/api/v1/auth/logout/')
+    expect(request.headers.get('Authorization')).toBeNull() // o logout não leva Bearer
+    expect(await request.json()).toEqual({ refresh: 'R0' })
+  })
+
+  it('logout() sem rede não rebenta: a sessão local acaba na mesma', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof globalThis.fetch>().mockRejectedValueOnce(new TypeError('Failed to fetch')),
+    )
+    localStorage.setItem('refresh', 'R0')
+    const auth = useAuth()
+
+    auth.logout()
+    await flushPromises()
+
+    expect(auth.isLoggedIn).toBe(false)
     expect(localStorage.getItem('refresh')).toBeNull()
   })
 })

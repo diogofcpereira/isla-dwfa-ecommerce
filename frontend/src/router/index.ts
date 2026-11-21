@@ -1,5 +1,5 @@
 // src/router/index.ts — o urls.py do frontend: um URL por ecrã, e o guard.
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
 
 import { useAuth } from '@/stores/auth'
 import CarsView from '@/views/CarsView.vue'
@@ -7,7 +7,8 @@ import CarsView from '@/views/CarsView.vue'
 // Os nossos dados em cada rota, tipados: `requiresAuth: 'yes'` não compila.
 declare module 'vue-router' {
   interface RouteMeta {
-    requiresAuth?: boolean
+    requiresAuth?: boolean // ≈ @login_required
+    requiresGestor?: boolean // ≈ @user_passes_test(is_gestor); implica requiresAuth
   }
 }
 
@@ -25,6 +26,11 @@ const router = createRouter({
     },
     { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue') },
     {
+      path: '/forbidden',
+      name: 'forbidden',
+      component: () => import('@/views/ForbiddenView.vue'),
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/views/NotFoundView.vue'),
@@ -32,13 +38,22 @@ const router = createRouter({
   ],
 })
 
-// ≈ @login_required com ?next=. Corre antes de cada navegação.
-// Protege o ECRÃ; os DADOS protege-os a API (401/403/404 do M1).
-router.beforeEach((to) => {
+/**
+ * O guard, exportado para se testar sem browser. Corre antes de cada navegação.
+ * Protege o ECRÃ; os DADOS protege-os a API (401/403/404 do M1) — esconder não chega.
+ */
+export function authGuard(to: RouteLocationNormalized) {
   const auth = useAuth()
-  if (to.meta.requiresAuth && !auth.isLoggedIn) {
-    return { name: 'login', query: { next: to.fullPath } }
+  const needsLogin = to.meta.requiresAuth || to.meta.requiresGestor
+  if (needsLogin && !auth.isLoggedIn) {
+    return { name: 'login', query: { next: to.fullPath } } // depois do login, volta aqui
   }
-})
+  if (to.meta.requiresGestor && !auth.isGestor) {
+    return { name: 'forbidden' } // autenticado, mas cliente: não é para ele
+  }
+  return true
+}
+
+router.beforeEach(authGuard)
 
 export default router
