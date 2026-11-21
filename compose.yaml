@@ -1,3 +1,6 @@
+# compose.yaml — só a base de dados para desenvolvimento (a API corre com runserver).
+name: dwfa-grupo # M2: o nome do projeto vive aqui (saiu do .env: COMPOSE_PROJECT_NAME)
+
 services:
   db:
     image: postgres:16
