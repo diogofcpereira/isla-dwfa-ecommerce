@@ -1,0 +1,28 @@
+# .dockerignore — o que NUNCA entra no contexto de build da imagem da API.
+# Segredos: o .env chega ao contentor pelo compose (env_file), não pela imagem.
+.env
+.env.*
+!.env.example
+
+# Ambientes e caches locais
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+staticfiles/
+
+# Git, CI e editores
+.git/
+.github/
+.vscode/
+.idea/
+
+# O frontend tem a sua própria imagem (frontend/Dockerfile)
+frontend/
+node_modules/
+
+# Documentação e dados locais
+docs/
+*.sqlite3
+pgdata/
