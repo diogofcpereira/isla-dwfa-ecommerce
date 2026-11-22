@@ -9,7 +9,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from accounts.factories import UserFactory
-from shop.factories import CarFactory, CustomerFactory
+from shop.factories import BrandFactory, CarFactory, CustomerFactory
 from shop.services import Conflict
 from testdrives import models, services
 
@@ -92,7 +92,11 @@ def test_a_slot_is_free_again_after_a_cancellation(actors):
     taken = booking(CustomerFactory(), car=car)
     body = {"car": car.id, "scheduled_for": slot().isoformat()}
     api = as_(actors["customer"])
-    assert api.post(URL, body, format="json").status_code == 400  # horário ocupado
+    busy = api.post(URL, body, format="json")
+    assert busy.status_code == 400  # horário ocupado, com a mensagem no campo certo (M2)
+    assert busy.json()["errors"] == {
+        "scheduled_for": ["Este horário já está marcado para esta viatura."]
+    }
 
     taken.status = "cancelled"
     taken.save()
@@ -142,3 +146,29 @@ def test_test_drive_list_has_no_n_plus_one(actors, django_assert_max_num_queries
     with django_assert_max_num_queries(3):  # grupos + count + marcações com viatura e marca
         r = as_(actors["gestor"]).get(URL)
     assert r.status_code == 200 and len(r.json()["results"]) == 20
+
+
+def test_search_test_drives_by_car_customer_and_notes(actors):
+    # M2 (correção do M1): ?search= nos test drives.
+    golf = CarFactory(brand=BrandFactory(name="Volkswagen", slug="volkswagen"), model="Golf")
+    yaris = CarFactory(brand=BrandFactory(name="Toyota", slug="toyota"), model="Yaris")
+    ana = actors["customer"].customer
+    booking(ana, car=golf, notes="Quero experimentar em autoestrada.")
+    booking(CustomerFactory(), car=yaris)
+    gestor = as_(actors["gestor"])
+
+    def found(term):
+        return [d["car"] for d in gestor.get(URL, {"search": term}).json()["results"]]
+
+    assert found("golf") == [golf.id]  # modelo, sem distinguir maiúsculas
+    assert found("toyota") == [yaris.id]  # marca
+    assert found(ana.user.username) == [golf.id]  # cliente (útil ao gestor)
+    assert found("autoestrada") == [golf.id]  # notas
+    assert found("tesla") == []
+
+
+def test_customer_search_stays_inside_own_test_drives(actors):
+    yaris = CarFactory(brand=BrandFactory(name="Toyota", slug="toyota"), model="Yaris")
+    booking(CustomerFactory(), car=yaris)  # de outro cliente
+    r = as_(actors["customer"]).get(URL, {"search": "toyota"})
+    assert r.status_code == 200 and r.json()["count"] == 0

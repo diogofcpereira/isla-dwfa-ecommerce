@@ -23,6 +23,11 @@ class TestDriveSerializer(serializers.ModelSerializer):
         ]
         # O cliente vem do login; o estado só muda em /confirm/, /decline/ e /cancel/.
         read_only_fields = ["customer", "status", "created_at"]
+        # M2 (correção): sem isto, o DRF gera um UniqueTogetherValidator a partir da
+        # uq_testdrive_car_slot_active, que corre ANTES do validate() e responde em inglês e
+        # sem campo ("The fields car, scheduled_for must make a unique set."). A regra do
+        # horário fica no validate(), com a mensagem no campo scheduled_for.
+        validators = []
 
     def validate_car(self, car):
         if not car.is_active:

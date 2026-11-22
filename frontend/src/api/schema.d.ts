@@ -1037,7 +1037,6 @@ export interface components {
             readonly customer: number;
             /** Format: date-time */
             scheduled_for: string;
-            /** @default requested */
             readonly status: components["schemas"]["TestDriveStatusEnum"];
             readonly status_display: string;
             notes?: string;

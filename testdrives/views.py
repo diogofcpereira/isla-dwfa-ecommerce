@@ -31,15 +31,24 @@ class TestDriveViewSet(
     Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
     """
 
-    queryset = TestDrive.objects.select_related("car__brand", "customer")
+    queryset = TestDrive.objects.select_related("car__brand", "customer__user")
     serializer_class = TestDriveSerializer
     filterset_fields = ["status", "car"]
+    # M2 (correção do M1): ?search= procura na viatura, no cliente e nas notas.
+    search_fields = [
+        "car__brand__name",
+        "car__model",
+        "car__version",
+        "car__code",
+        "customer__user__username",
+        "notes",
+    ]
     ordering_fields = ["scheduled_for", "created_at"]
     ordering = ["scheduled_for"]
     permission_classes = [IsAuthenticated, IsTestDriveOwnerOrGestor]
 
     def get_queryset(self):
-        qs = TestDrive.objects.select_related("car__brand", "customer")
+        qs = TestDrive.objects.select_related("car__brand", "customer__user")
         if is_gestor(self.request.user):
             return qs
         return qs.filter(customer__user_id=self.request.user.id)  # os outros dão 404

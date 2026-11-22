@@ -281,13 +281,13 @@ Um recurso por membro, cada um na sua app Django (`deliveries`, `reviews`, `test
 ### TestDrive — marcação de test drive (Rúben)
 
 27. **Horários de hora a hora, um por viatura:** o `validate_scheduled_for` exige uma data no futuro e à hora certa (hh:00), e a `uq_testdrive_car_slot_active` é uma `UniqueConstraint` condicional, só para pedidos e confirmados: cancelar ou recusar liberta o horário. Rejeitado: uma `UniqueConstraint` simples, que deixava o horário ocupado para sempre.
-28. **Dois clientes ao mesmo tempo:** o serializer dá 400 no caso normal; se dois pedidos passarem juntos, a constraint apanha o segundo e o `book_test_drive` responde 409 em vez de 500.
+28. **Dois clientes ao mesmo tempo:** o serializer dá 400 no caso normal; se dois pedidos passarem juntos, a constraint apanha o segundo e o `book_test_drive` responde 409 em vez de 500. **Correção do M2:** `validators = []` no `TestDriveSerializer` — o DRF gerava sozinho um `UniqueTogetherValidator` a partir da constraint, que respondia antes do `validate()`, em inglês e sem campo; agora o horário ocupado vem em `errors.scheduled_for`, que a SPA mostra ao lado do dia e da hora.
 29. **O estado só muda por ações:** confirmar e recusar (só o gestor, `IsGestor`) a partir de um pedido; cancelar (o dono ou o gestor) a partir de um pedido ou de um confirmado; o resto dá 409. Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
-30. **Cada um vê os seus:** filtro no `get_queryset` + `IsTestDriveOwnerOrGestor`, por isso as marcações de outros dão 404.
+30. **Cada um vê os seus:** filtro no `get_queryset` + `IsTestDriveOwnerOrGestor`, por isso as marcações de outros dão 404. **Correção do M2:** a lista tem pesquisa (`?search=`) pela marca, modelo, versão e código da viatura, pelo cliente e pelas notas (`search_fields`); o schema já anunciava o `?search=`, porque o `SearchFilter` é um backend global, mas sem `search_fields` a API ignorava-o. Testado em `test_search_test_drives_by_car_customer_and_notes`.
 
 | Endpoint | anónimo | cliente | gestor | Mecanismo |
 |---|---|---|---|---|
-| `GET /test-drives/` | 401 | 200, só os seus | 200, todos | filtro no `get_queryset` |
+| `GET /test-drives/` (e `?search=`) | 401 | 200, só os seus | 200, todos | filtro no `get_queryset` + `search_fields` |
 | `GET /test-drives/{id}/` (de outro) | 401 | 404 | 200 | filtro → 404 |
 | `PUT/PATCH/DELETE /test-drives/{id}/` | 401 | 405 | 405 | sem update nem destroy no viewset; o `IsAuthenticated` responde primeiro ao anónimo |
 | `POST /test-drives/` | 401 | 201; 400 no passado, fora da hora certa, viatura retirada ou horário ocupado | 201 | `validate` + `uq_testdrive_car_slot_active` |

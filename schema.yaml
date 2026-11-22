@@ -2772,7 +2772,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/TestDriveStatusEnum'
           readOnly: true
-          default: requested
         status_display:
           type: string
           readOnly: true
