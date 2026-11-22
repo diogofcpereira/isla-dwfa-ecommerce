@@ -55,8 +55,13 @@ class ReviewViewSet(viewsets.ModelViewSet):
             ) from None
 
     def perform_update(self, serializer):
-        # Uma avaliação editada volta a precisar de moderação.
-        serializer.save(status=Review.Status.PENDING)
+        # M2 (correção do M1): só a edição do AUTOR volta a precisar de moderação.
+        # Quando o gestor corrige uma avaliação (ex.: tira um dado pessoal do comentário),
+        # já é ele quem modera: o estado (aprovada/oculta) mantém-se.
+        if is_gestor(self.request.user):
+            serializer.save()
+        else:
+            serializer.save(status=Review.Status.PENDING)
 
     @extend_schema(request=ModerationSerializer, responses=ReviewSerializer)
     @action(detail=True, methods=["post"], permission_classes=[IsGestor])

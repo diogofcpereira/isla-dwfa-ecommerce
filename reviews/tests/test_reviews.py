@@ -115,6 +115,20 @@ def test_editing_a_review_sends_it_back_to_moderation():
     assert r.json()["status"] == "pending" and r.json()["rating"] == 2
 
 
+@pytest.mark.parametrize("status", ["approved", "hidden"])
+def test_gestor_editing_a_review_keeps_its_status(gestor, status):
+    # M2 (correção do M1): a edição do gestor não manda a avaliação de volta para pending.
+    car = CarFactory()
+    target = review(car, buyer_of(car), status=status)
+    r = as_(gestor).patch(
+        f"/api/v1/reviews/{target.id}/", {"comment": "Comentário corrigido."}, format="json"
+    )
+    assert r.status_code == 200
+    assert r.json()["status"] == status and r.json()["comment"] == "Comentário corrigido."
+    target.refresh_from_db()
+    assert target.status == status
+
+
 def test_customer_cannot_edit_or_delete_someone_elses_review():
     car = CarFactory()
     public = review(car, buyer_of(car), status="approved")  # visível, mas não é dele
