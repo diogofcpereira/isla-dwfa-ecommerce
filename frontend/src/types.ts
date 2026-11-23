@@ -20,6 +20,10 @@ export type OrderLine = Schemas['OrderLine']
 export type OrderStatus = Schemas['OrderStatusEnum'] // 'pending' | 'paid' | 'delivered' | 'cancelled'
 export type PaymentMethod = Schemas['MethodEnum'] // 'transfer' | 'financing' | 'card' | 'mbway'
 
+// ---- recursos do M1 (um por membro) ----
+export type Delivery = Schemas['Delivery'] // Diogo
+export type DeliveryStatus = Schemas['DeliveryStatusEnum'] // 'scheduled' | 'in_transit' | 'delivered'
+
 /**
  * Corpo de erro da API: Problem Details (RFC 9457), como o M1 os devolve.
  * `errors` traz os erros por campo de um 400; o resto são membros de extensão (ex.: `code`).

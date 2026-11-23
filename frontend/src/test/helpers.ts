@@ -63,10 +63,13 @@ export function testRouter(routes: RouteRecordRaw[]) {
     'cars',
     'car',
     'login',
+    'forbidden',
     'orders',
     'new-order',
     'deliveries',
+    'new-delivery',
     'reviews',
+    'review-moderation',
     'test-drives',
   ]
   const extra = names

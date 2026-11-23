@@ -1,5 +1,6 @@
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
 from shop.models import Order
 
@@ -26,6 +27,18 @@ class DeliverySerializer(serializers.ModelSerializer):
         ]
         # O estado só muda pelas ações /ship/ e /complete/ (services.py).
         read_only_fields = ["status", "delivered_at", "created_at"]
+        # M2: a mensagem da OneToOne em português (era "delivery with this order already
+        # exists."), porque a SPA mostra-a tal e qual ao lado do campo da encomenda.
+        extra_kwargs = {
+            "order": {
+                "validators": [
+                    UniqueValidator(
+                        queryset=Delivery.objects.all(),
+                        message="Esta encomenda já tem uma entrega.",
+                    )
+                ]
+            }
+        }
 
     def get_fields(self):
         fields = super().get_fields()

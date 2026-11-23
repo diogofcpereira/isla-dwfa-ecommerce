@@ -11,3 +11,8 @@ export function money(value: string | number): string {
 export function dateTime(iso: string): string {
   return new Date(iso).toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' })
 }
+
+/** O valor de um <input type="datetime-local"> ("2026-11-25T10:00", hora local) → ISO 8601. */
+export function localToIso(value: string): string {
+  return new Date(value).toISOString()
+}
