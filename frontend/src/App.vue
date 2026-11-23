@@ -28,6 +28,8 @@ watch(
       <template v-if="auth.isLoggedIn">
         <RouterLink :to="{ name: 'orders' }">Encomendas</RouterLink>
         <RouterLink :to="{ name: 'deliveries' }">Entregas</RouterLink>
+        <RouterLink v-if="auth.isGestor" :to="{ name: 'review-moderation' }">Moderação</RouterLink>
+        <RouterLink v-else :to="{ name: 'reviews' }">Avaliações</RouterLink>
         <span class="who">
           {{ auth.user?.username }}<template v-if="auth.isGestor"> · gestor</template>
         </span>

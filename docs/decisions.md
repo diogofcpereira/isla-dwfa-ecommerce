@@ -266,7 +266,7 @@ Um recurso por membro, cada um na sua app Django (`deliveries`, `reviews`, `test
 23. **Só avalia quem comprou:** o `ReviewSerializer.validate` procura uma linha dessa viatura numa encomenda paga ou entregue do cliente; sem compra, 400. Rejeitado: deixar qualquer cliente avaliar, que abria a porta a avaliações falsas.
 24. **Uma avaliação por cliente e viatura:** `uq_review_car_customer` na base de dados e a mesma verificação no serializer, para responder 400 em vez de rebentar com um `IntegrityError`. A nota vai de 1 a 5 (`ck_review_rating_1_5`).
 25. **Moderação:** as avaliações nascem pendentes e só o gestor as aprova ou oculta (`POST /reviews/{id}/moderate/`, `IsGestor`); uma avaliação editada volta a pendente. **Correção M2:** quando é o gestor a editar (ex.: tirar um dado pessoal do comentário), o estado mantém-se - já é ele quem modera. Rejeitado: obrigar o gestor a moderar de novo o que ele próprio acabou de corrigir. O público vê só as aprovadas; o cliente vê também as suas.
-26. **Leitura pública, escrita do autor:** `IsAuthenticatedOrReadOnly` + `IsReviewAuthorOrGestor`. Numa avaliação aprovada de outro, o cliente leva 403 (ela é pública); numa pendente de outro, 404 (nem a vê).
+26. **Leitura pública, escrita do autor:** `IsAuthenticatedOrReadOnly` + `IsReviewAuthorOrGestor`. Numa avaliação aprovada de outro, o cliente leva 403 (ela é pública); numa pendente de outro, 404 (nem a vê). **M2:** `?customer=<id>` filtra as avaliações de um cliente (o ecrã "As minhas avaliações" da SPA); não expõe nada de novo porque o filtro corre depois do `get_queryset` e só devolve o que o utilizador já pode ver (`test_customer_filter_lists_only_my_reviews`).
 
 | Endpoint | anónimo | cliente | gestor | Mecanismo |
 |---|---|---|---|---|

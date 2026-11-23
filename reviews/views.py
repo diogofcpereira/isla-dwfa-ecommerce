@@ -27,7 +27,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     queryset = Review.objects.select_related("car__brand", "customer__user")
     serializer_class = ReviewSerializer
-    filterset_fields = ["car", "rating", "status"]
+    filterset_fields = ["car", "customer", "rating", "status"]  # M2: ?customer= (as minhas)
     search_fields = ["comment"]
     ordering_fields = ["created_at", "rating"]
     ordering = ["-created_at"]

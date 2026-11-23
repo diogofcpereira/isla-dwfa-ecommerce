@@ -2225,6 +2225,7 @@ export interface operations {
         parameters: {
             query?: {
                 car?: number;
+                customer?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description A page number within the paginated result set. */

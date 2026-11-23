@@ -50,6 +50,18 @@ const router = createRouter({
       meta: { requiresGestor: true }, // só gestores: um cliente vai para /forbidden
     },
     {
+      path: '/reviews',
+      name: 'reviews',
+      component: () => import('@/views/ReviewsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/reviews/moderation',
+      name: 'review-moderation',
+      component: () => import('@/views/ReviewModerationView.vue'),
+      meta: { requiresGestor: true },
+    },
+    {
       path: '/forbidden',
       name: 'forbidden',
       component: () => import('@/views/ForbiddenView.vue'),

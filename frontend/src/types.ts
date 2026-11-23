@@ -23,6 +23,8 @@ export type PaymentMethod = Schemas['MethodEnum'] // 'transfer' | 'financing' | 
 // ---- recursos do M1 (um por membro) ----
 export type Delivery = Schemas['Delivery'] // Diogo
 export type DeliveryStatus = Schemas['DeliveryStatusEnum'] // 'scheduled' | 'in_transit' | 'delivered'
+export type Review = Schemas['Review'] // Filipe
+export type ReviewStatus = Schemas['ReviewStatusEnum'] // 'pending' | 'approved' | 'hidden'
 
 /**
  * Corpo de erro da API: Problem Details (RFC 9457), como o M1 os devolve.

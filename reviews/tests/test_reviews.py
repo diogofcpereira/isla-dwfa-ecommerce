@@ -169,3 +169,13 @@ def test_review_list_by_role(gestor, role, visible):
     r = as_(users[role]).get("/api/v1/reviews/")
     assert r.status_code == 200
     assert {x["id"] for x in r.json()["results"]} == {made[k].id for k in visible}
+
+
+def test_customer_filter_lists_only_my_reviews():
+    # M2: o ecrã "As minhas avaliações" pede ?customer=<o meu id de cliente>.
+    car = CarFactory()
+    me = buyer_of(car)
+    mine = review(car, me, status="pending")
+    review(car, buyer_of(car), status="approved")  # de outro cliente, visível a todos
+    r = as_(me.user).get("/api/v1/reviews/", {"customer": me.id})
+    assert [x["id"] for x in r.json()["results"]] == [mine.id]

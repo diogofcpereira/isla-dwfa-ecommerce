@@ -16,3 +16,9 @@ export function dateTime(iso: string): string {
 export function localToIso(value: string): string {
   return new Date(value).toISOString()
 }
+
+/** 4 → "★★★★☆" (com o número para leitores de ecrã no aria-label de quem o usa). */
+export function stars(rating: number): string {
+  const n = Math.max(0, Math.min(5, Math.round(rating)))
+  return '★'.repeat(n) + '☆'.repeat(5 - n)
+}
