@@ -115,6 +115,20 @@ def test_editing_a_review_sends_it_back_to_moderation():
     assert r.json()["status"] == "pending" and r.json()["rating"] == 2
 
 
+@pytest.mark.parametrize("status", ["approved", "hidden"])
+def test_gestor_editing_a_review_keeps_its_status(gestor, status):
+    # M2 (correção do M1): a edição do gestor não manda a avaliação de volta para pending.
+    car = CarFactory()
+    target = review(car, buyer_of(car), status=status)
+    r = as_(gestor).patch(
+        f"/api/v1/reviews/{target.id}/", {"comment": "Comentário corrigido."}, format="json"
+    )
+    assert r.status_code == 200
+    assert r.json()["status"] == status and r.json()["comment"] == "Comentário corrigido."
+    target.refresh_from_db()
+    assert target.status == status
+
+
 def test_customer_cannot_edit_or_delete_someone_elses_review():
     car = CarFactory()
     public = review(car, buyer_of(car), status="approved")  # visível, mas não é dele
@@ -155,3 +169,13 @@ def test_review_list_by_role(gestor, role, visible):
     r = as_(users[role]).get("/api/v1/reviews/")
     assert r.status_code == 200
     assert {x["id"] for x in r.json()["results"]} == {made[k].id for k in visible}
+
+
+def test_customer_filter_lists_only_my_reviews():
+    # M2: o ecrã "As minhas avaliações" pede ?customer=<o meu id de cliente>.
+    car = CarFactory()
+    me = buyer_of(car)
+    mine = review(car, me, status="pending")
+    review(car, buyer_of(car), status="approved")  # de outro cliente, visível a todos
+    r = as_(me.user).get("/api/v1/reviews/", {"customer": me.id})
+    assert [x["id"] for x in r.json()["results"]] == [mine.id]

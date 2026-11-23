@@ -265,8 +265,8 @@ Um recurso por membro, cada um na sua app Django (`deliveries`, `reviews`, `test
 
 23. **Só avalia quem comprou:** o `ReviewSerializer.validate` procura uma linha dessa viatura numa encomenda paga ou entregue do cliente; sem compra, 400. Rejeitado: deixar qualquer cliente avaliar, que abria a porta a avaliações falsas.
 24. **Uma avaliação por cliente e viatura:** `uq_review_car_customer` na base de dados e a mesma verificação no serializer, para responder 400 em vez de rebentar com um `IntegrityError`. A nota vai de 1 a 5 (`ck_review_rating_1_5`).
-25. **Moderação:** as avaliações nascem pendentes e só o gestor as aprova ou oculta (`POST /reviews/{id}/moderate/`, `IsGestor`); uma avaliação editada volta a pendente. O público vê só as aprovadas; o cliente vê também as suas.
-26. **Leitura pública, escrita do autor:** `IsAuthenticatedOrReadOnly` + `IsReviewAuthorOrGestor`. Numa avaliação aprovada de outro, o cliente leva 403 (ela é pública); numa pendente de outro, 404 (nem a vê).
+25. **Moderação:** as avaliações nascem pendentes e só o gestor as aprova ou oculta (`POST /reviews/{id}/moderate/`, `IsGestor`); uma avaliação editada volta a pendente. **Correção M2:** quando é o gestor a editar (ex.: tirar um dado pessoal do comentário), o estado mantém-se - já é ele quem modera. Rejeitado: obrigar o gestor a moderar de novo o que ele próprio acabou de corrigir. O público vê só as aprovadas; o cliente vê também as suas.
+26. **Leitura pública, escrita do autor:** `IsAuthenticatedOrReadOnly` + `IsReviewAuthorOrGestor`. Numa avaliação aprovada de outro, o cliente leva 403 (ela é pública); numa pendente de outro, 404 (nem a vê). **M2:** `?customer=<id>` filtra as avaliações de um cliente (o ecrã "As minhas avaliações" da SPA); não expõe nada de novo porque o filtro corre depois do `get_queryset` e só devolve o que o utilizador já pode ver (`test_customer_filter_lists_only_my_reviews`).
 
 | Endpoint | anónimo | cliente | gestor | Mecanismo |
 |---|---|---|---|---|
@@ -274,20 +274,20 @@ Um recurso por membro, cada um na sua app Django (`deliveries`, `reviews`, `test
 | `GET /reviews/{id}/` (pendente ou oculta de outro) | 404 | 404 | 200 | filtro → 404 |
 | `POST /reviews/` | 401 | 201 se comprou; 400 se não comprou ou se repetir | 201 se comprou | `validate` |
 | `PATCH/DELETE /reviews/{id}/` (sua) | 401 | 200 (volta a pendente) / 204 | 200/204 | `IsReviewAuthorOrGestor` |
-| `PATCH/DELETE /reviews/{id}/` (aprovada, de outro) | 401 | 403 | 200/204 | `IsReviewAuthorOrGestor` |
+| `PATCH/DELETE /reviews/{id}/` (aprovada, de outro) | 401 | 403 | 200 (o estado mantém-se)/204 | `IsReviewAuthorOrGestor` + `perform_update` |
 | `PATCH/DELETE /reviews/{id}/` (pendente ou oculta de outro) | 401 | 404 | 200/204 | filtro → 404 |
 | `POST /reviews/{id}/moderate/` | 401 | 403 | 200 | `IsGestor` |
 
 ### TestDrive — marcação de test drive (Rúben)
 
 27. **Horários de hora a hora, um por viatura:** o `validate_scheduled_for` exige uma data no futuro e à hora certa (hh:00), e a `uq_testdrive_car_slot_active` é uma `UniqueConstraint` condicional, só para pedidos e confirmados: cancelar ou recusar liberta o horário. Rejeitado: uma `UniqueConstraint` simples, que deixava o horário ocupado para sempre.
-28. **Dois clientes ao mesmo tempo:** o serializer dá 400 no caso normal; se dois pedidos passarem juntos, a constraint apanha o segundo e o `book_test_drive` responde 409 em vez de 500.
+28. **Dois clientes ao mesmo tempo:** o serializer dá 400 no caso normal; se dois pedidos passarem juntos, a constraint apanha o segundo e o `book_test_drive` responde 409 em vez de 500. **Correção do M2:** `validators = []` no `TestDriveSerializer` — o DRF gerava sozinho um `UniqueTogetherValidator` a partir da constraint, que respondia antes do `validate()`, em inglês e sem campo; agora o horário ocupado vem em `errors.scheduled_for`, que a SPA mostra ao lado do dia e da hora.
 29. **O estado só muda por ações:** confirmar e recusar (só o gestor, `IsGestor`) a partir de um pedido; cancelar (o dono ou o gestor) a partir de um pedido ou de um confirmado; o resto dá 409. Não há PUT/PATCH nem DELETE: muda-se de horário cancelando e marcando de novo.
-30. **Cada um vê os seus:** filtro no `get_queryset` + `IsTestDriveOwnerOrGestor`, por isso as marcações de outros dão 404.
+30. **Cada um vê os seus:** filtro no `get_queryset` + `IsTestDriveOwnerOrGestor`, por isso as marcações de outros dão 404. **Correção do M2:** a lista tem pesquisa (`?search=`) pela marca, modelo, versão e código da viatura, pelo cliente e pelas notas (`search_fields`); o schema já anunciava o `?search=`, porque o `SearchFilter` é um backend global, mas sem `search_fields` a API ignorava-o. Testado em `test_search_test_drives_by_car_customer_and_notes`.
 
 | Endpoint | anónimo | cliente | gestor | Mecanismo |
 |---|---|---|---|---|
-| `GET /test-drives/` | 401 | 200, só os seus | 200, todos | filtro no `get_queryset` |
+| `GET /test-drives/` (e `?search=`) | 401 | 200, só os seus | 200, todos | filtro no `get_queryset` + `search_fields` |
 | `GET /test-drives/{id}/` (de outro) | 401 | 404 | 200 | filtro → 404 |
 | `PUT/PATCH/DELETE /test-drives/{id}/` | 401 | 405 | 405 | sem update nem destroy no viewset; o `IsAuthenticated` responde primeiro ao anónimo |
 | `POST /test-drives/` | 401 | 201; 400 no passado, fora da hora certa, viatura retirada ou horário ocupado | 201 | `validate` + `uq_testdrive_car_slot_active` |

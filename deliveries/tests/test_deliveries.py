@@ -79,6 +79,8 @@ def test_only_paid_orders_get_a_delivery_and_only_one(actors):
     body["order"] = order.id
     again = api.post("/api/v1/deliveries/", body, format="json")
     assert again.status_code == 400  # OneToOne: já tem entrega
+    # M2: a SPA mostra a mensagem ao lado do campo, por isso tem de estar em português.
+    assert again.json()["errors"] == {"order": ["Esta encomenda já tem uma entrega."]}
 
 
 def test_delivery_date_must_be_in_the_future(actors):

@@ -38,6 +38,36 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/deliveries',
+      name: 'deliveries',
+      component: () => import('@/views/DeliveriesView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/deliveries/new',
+      name: 'new-delivery',
+      component: () => import('@/views/NewDeliveryView.vue'),
+      meta: { requiresGestor: true }, // só gestores: um cliente vai para /forbidden
+    },
+    {
+      path: '/reviews',
+      name: 'reviews',
+      component: () => import('@/views/ReviewsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/reviews/moderation',
+      name: 'review-moderation',
+      component: () => import('@/views/ReviewModerationView.vue'),
+      meta: { requiresGestor: true },
+    },
+    {
+      path: '/test-drives',
+      name: 'test-drives',
+      component: () => import('@/views/TestDrivesView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/forbidden',
       name: 'forbidden',
       component: () => import('@/views/ForbiddenView.vue'),

@@ -1037,7 +1037,6 @@ export interface components {
             readonly customer: number;
             /** Format: date-time */
             scheduled_for: string;
-            /** @default requested */
             readonly status: components["schemas"]["TestDriveStatusEnum"];
             readonly status_display: string;
             notes?: string;
@@ -2226,6 +2225,7 @@ export interface operations {
         parameters: {
             query?: {
                 car?: number;
+                customer?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
                 /** @description A page number within the paginated result set. */

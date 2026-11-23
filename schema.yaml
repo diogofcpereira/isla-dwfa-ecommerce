@@ -1462,6 +1462,10 @@ paths:
         name: car
         schema:
           type: integer
+      - in: query
+        name: customer
+        schema:
+          type: integer
       - name: ordering
         required: false
         in: query
@@ -2772,7 +2776,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/TestDriveStatusEnum'
           readOnly: true
-          default: requested
         status_display:
           type: string
           readOnly: true
