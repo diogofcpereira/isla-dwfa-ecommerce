@@ -25,6 +25,8 @@ export type Delivery = Schemas['Delivery'] // Diogo
 export type DeliveryStatus = Schemas['DeliveryStatusEnum'] // 'scheduled' | 'in_transit' | 'delivered'
 export type Review = Schemas['Review'] // Filipe
 export type ReviewStatus = Schemas['ReviewStatusEnum'] // 'pending' | 'approved' | 'hidden'
+export type TestDrive = Schemas['TestDrive'] // Rúben
+export type TestDriveStatus = Schemas['TestDriveStatusEnum'] // 'requested' | 'confirmed' | …
 
 /**
  * Corpo de erro da API: Problem Details (RFC 9457), como o M1 os devolve.

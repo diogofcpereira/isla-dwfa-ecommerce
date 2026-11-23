@@ -62,6 +62,12 @@ const router = createRouter({
       meta: { requiresGestor: true },
     },
     {
+      path: '/test-drives',
+      name: 'test-drives',
+      component: () => import('@/views/TestDrivesView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/forbidden',
       name: 'forbidden',
       component: () => import('@/views/ForbiddenView.vue'),
