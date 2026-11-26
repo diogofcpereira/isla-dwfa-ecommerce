@@ -40,7 +40,15 @@ jobs:
         run: |
           uv run python manage.py spectacular --file schema.yaml --validate --fail-on-warn
           git diff --exit-code schema.yaml
-      - run: uv run pytest
+      # M2 (extra · cobertura): falha abaixo de 95% (mínimo no pyproject.toml) e põe a
+      # tabela da cobertura no resumo do run (Actions → o run → Summary).
+      - run: uv run pytest --cov
+      - name: Cobertura do backend no resumo do run
+        if: always()
+        run: |
+          echo "### Cobertura do backend (pytest)" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          uv run coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY" || true
 
   # Frontend (M2): tipos, lint, formatação, testes e build da SPA.
   frontend:
@@ -64,7 +72,24 @@ jobs:
       - run: npm run type-check
       - run: npm run check:lint
       - run: npm run check:format
-      - run: npm run test:ci
+      # M2 (extra · cobertura): Vitest com mínimos (vitest.config.ts); o relatório HTML fica
+      # para descarregar no run (Artifacts → cobertura-frontend).
+      - run: npm run test:coverage
+      - name: Cobertura do frontend no resumo do run
+        if: always()
+        run: |
+          node -e "
+          const t = require('./coverage/coverage-summary.json').total
+          const rows = ['statements', 'branches', 'functions', 'lines'].map((k) => '| ' + k + ' | ' + t[k].pct + '% |')
+          console.log(['### Cobertura do frontend (Vitest)', '', '| | % |', '|---|---|', ...rows].join('\\n'))
+          " >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Relatório HTML da cobertura do frontend
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-frontend
+          path: frontend/coverage/
+          if-no-files-found: ignore
       - run: npm run build-only
 
   # M2 (extra): o mesmo arranque que o professor faz num clone limpo, em cada push.

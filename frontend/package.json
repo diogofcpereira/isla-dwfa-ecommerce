@@ -17,7 +17,8 @@
     "check:lint": "oxlint . && eslint .",
     "format": "prettier --write --experimental-cli src/",
     "check:format": "prettier --check src/",
-    "gen:api": "openapi-typescript ../schema.yaml -o src/api/schema.d.ts"
+    "gen:api": "openapi-typescript ../schema.yaml -o src/api/schema.d.ts",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "openapi-fetch": "^0.17.0",
@@ -30,6 +31,7 @@
     "@types/jsdom": "^30.0.0",
     "@types/node": "^24.13.4",
     "@vitejs/plugin-vue": "^6.0.8",
+    "@vitest/coverage-v8": "^4.1.12",
     "@vitest/eslint-plugin": "^1.6.27",
     "@vue/eslint-config-typescript": "^14.9.0",
     "@vue/test-utils": "^2.5.0",

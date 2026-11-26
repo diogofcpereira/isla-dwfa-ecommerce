@@ -21,6 +21,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=8.3",
+    "pytest-cov>=6.0",
     "pytest-django>=4.9",
     "ruff>=0.9",
 ]
@@ -35,3 +36,25 @@ select = ["E", "F", "I", "B", "UP", "DJ"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["config", "accounts", "core", "shop"]
+
+# M2 (extra · cobertura): o que conta é o código da aplicação, não os testes nem as migrações.
+[tool.coverage.run]
+source = ["."]
+branch = true
+omit = [
+    ".venv/*",
+    "*/migrations/*",
+    "*/tests/*",
+    "*/factories.py",
+    "manage.py",
+    "config/asgi.py",
+    "config/wsgi.py",
+    "config/settings/dev.py",
+    "config/settings/prod.py",
+]
+
+[tool.coverage.report]
+fail_under = 95
+show_missing = true
+skip_covered = true
+skip_empty = true

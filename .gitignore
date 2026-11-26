@@ -25,3 +25,8 @@ staticfiles/
 # override local · local override
 compose.override.yaml
 .eslintcache
+
+# Cobertura de testes (M2) · coverage reports
+.coverage
+coverage.xml
+htmlcov/
