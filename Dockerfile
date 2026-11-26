@@ -42,6 +42,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:$PATH" \
     DJANGO_SETTINGS_MODULE=config.settings.prod
 
+# Extra do M2 (segurança da imagem): as correções de segurança do Debian publicadas desde que
+# a imagem base foi gerada, e sem o pip, que não é preciso em runtime (as dependências vêm no
+# .venv) e traz bibliotecas antigas embutidas. O Trivy, no CI, confirma o resultado.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
+    && /usr/local/bin/python -m pip uninstall -y pip
+
 # Um utilizador sem privilégios: se alguém explorar a app, não é root no contentor.
 RUN groupadd --system app && useradd --system --gid app --home-dir /app app
 

@@ -122,7 +122,22 @@ jobs:
             -H 'Content-Type: application/json' \
             -d '{"username": "ana", "password": "drivenow-demo-2026"}' | grep -q '"access"'
           curl -fsSI http://localhost/ | grep -qi '^x-frame-options: DENY'
+          curl -fsSI http://localhost/cars/7 | grep -qi "^content-security-policy: default-src 'self'"
           echo "Tudo a responder."
+      # M2 (extra · segurança): vulnerabilidades HIGH/CRITICAL com correção disponível nas duas
+      # imagens, numa tabela no resumo do run. Só relatório (não bloqueia): sai um CVE novo quase
+      # todos os dias, e a entrega não deve depender disso; as imagens já aplicam as correções.
+      - name: Vulnerabilidades das imagens (Trivy)
+        if: success() || failure()
+        run: |
+          echo "### Vulnerabilidades HIGH/CRITICAL com correção (Trivy)" >> "$GITHUB_STEP_SUMMARY"
+          for img in drivenow-prod-backend drivenow-prod-web; do
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.76.2 image \
+              --quiet --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 --format table "$img" \
+              >> "$GITHUB_STEP_SUMMARY" || echo "(não foi possível analisar $img)" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          done
       - name: Logs (só se algo falhou)
         if: failure()
         run: $COMPOSE logs --no-color
