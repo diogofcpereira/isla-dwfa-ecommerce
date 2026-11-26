@@ -16,6 +16,7 @@ export const useAuth = defineStore('auth', () => {
   const refresh = ref<string | null>(localStorage.getItem(REFRESH_KEY))
   const user = ref<Me | null>(null)
   const ready = ref(false) // o bootstrap já correu?
+  const expired = ref(false) // a sessão acabou sozinha (refresh recusado), não por "Sair"
 
   // Uma cópia NÃO reativa do access, para o middleware. Se o middleware lesse access.value,
   // o watchEffect do useFetch (que está a correr quando o pedido sai) ficava a depender do
@@ -45,6 +46,7 @@ export const useAuth = defineStore('auth', () => {
     const pair = await unwrap(api.POST('/api/v1/auth/token/', { body: { username, password } }))
     access.value = pair.access
     setRefresh(pair.refresh)
+    expired.value = false
     try {
       user.value = await unwrap(api.GET('/api/v1/me/'))
     } catch (e) {
@@ -58,6 +60,12 @@ export const useAuth = defineStore('auth', () => {
     access.value = null
     setRefresh(null)
     user.value = null
+  }
+
+  /** A sessão expirou a meio (refresh recusado): o /login explica porquê. */
+  function expire() {
+    expired.value = user.value !== null // só "expira" quem tinha sessão
+    clearSession()
   }
 
   /**
@@ -87,14 +95,16 @@ export const useAuth = defineStore('auth', () => {
         // (e o que este separador tem em memória já estaria na blacklist).
         const current = localStorage.getItem(REFRESH_KEY)
         if (!current) {
-          clearSession()
+          expire()
           return null
         }
-        const { data } = await api.POST('/api/v1/auth/token/refresh/', {
+        const { data, response } = await api.POST('/api/v1/auth/token/refresh/', {
           body: { refresh: current },
         })
         if (!data) {
-          clearSession() // refresh expirado ou na blacklist: a sessão acabou
+          // 401: refresh expirado ou na blacklist → a sessão acabou.
+          // 5xx (API parada): a sessão NÃO acabou; o refresh fica para tentar depois.
+          if (response.status === 401) expire()
           return null
         }
         access.value = data.access
@@ -125,6 +135,7 @@ export const useAuth = defineStore('auth', () => {
     refresh,
     user,
     ready,
+    expired,
     isLoggedIn,
     isGestor,
     login,

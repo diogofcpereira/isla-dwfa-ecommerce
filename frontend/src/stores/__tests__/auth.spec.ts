@@ -96,4 +96,37 @@ describe('store auth', () => {
     expect(auth.isLoggedIn).toBe(false)
     expect(localStorage.getItem('refresh')).toBeNull()
   })
+
+  it('um refresh recusado a meio da sessão marca-a como expirada (≠ "Sair")', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn<typeof globalThis.fetch>()
+        .mockResolvedValueOnce(json({ detail: 'Token is blacklisted' }, 401)),
+    )
+    localStorage.setItem('refresh', 'R0')
+    const auth = useAuth()
+    auth.user = { id: 1, username: 'ana', groups: [] }
+
+    expect(await auth.refreshAccess()).toBeNull()
+
+    expect(auth.isLoggedIn).toBe(false)
+    expect(auth.expired).toBe(true)
+  })
+
+  it('com a API parada (502) a renovação falha mas a sessão não acaba', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn<typeof globalThis.fetch>()
+        .mockResolvedValueOnce(new Response('<html>502 Bad Gateway</html>', { status: 502 })),
+    )
+    localStorage.setItem('refresh', 'R0')
+    const auth = useAuth()
+
+    expect(await auth.refreshAccess()).toBeNull()
+
+    expect(auth.expired).toBe(false)
+    expect(localStorage.getItem('refresh')).toBe('R0') // um F5 com a API de volta recupera-a
+  })
 })

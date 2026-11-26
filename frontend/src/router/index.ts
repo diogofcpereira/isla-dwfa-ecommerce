@@ -9,6 +9,7 @@ declare module 'vue-router' {
   interface RouteMeta {
     requiresAuth?: boolean // ≈ @login_required
     requiresGestor?: boolean // ≈ @user_passes_test(is_gestor); implica requiresAuth
+    title?: string // o título do separador do browser (extra do M2)
   }
 }
 
@@ -16,66 +17,75 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', redirect: { name: 'cars' } },
-    { path: '/cars', name: 'cars', component: CarsView },
+    { path: '/cars', name: 'cars', component: CarsView, meta: { title: 'Viaturas' } },
     {
       // (\d+): só números, como <int:pk> no Django. /cars/abc cai no catch-all.
       path: '/cars/:id(\\d+)',
       name: 'car',
       props: true, // o :id chega ao componente como a prop `id` (string)
       component: () => import('@/views/CarView.vue'), // lazy: um chunk só para o detalhe
+      meta: { title: 'Viatura' },
     },
-    { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue') },
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/LoginView.vue'),
+      meta: { title: 'Entrar' },
+    },
     {
       path: '/orders',
       name: 'orders',
       component: () => import('@/views/OrdersView.vue'),
-      meta: { requiresAuth: true },
+      meta: { title: 'Encomendas', requiresAuth: true },
     },
     {
       path: '/orders/new',
       name: 'new-order',
       component: () => import('@/views/NewOrderView.vue'),
-      meta: { requiresAuth: true },
+      meta: { title: 'Nova encomenda', requiresAuth: true },
     },
     {
       path: '/deliveries',
       name: 'deliveries',
       component: () => import('@/views/DeliveriesView.vue'),
-      meta: { requiresAuth: true },
+      meta: { title: 'Entregas', requiresAuth: true },
     },
     {
       path: '/deliveries/new',
       name: 'new-delivery',
       component: () => import('@/views/NewDeliveryView.vue'),
-      meta: { requiresGestor: true }, // só gestores: um cliente vai para /forbidden
+      // Só gestores: um cliente que escreva o URL à mão vai para /forbidden.
+      meta: { title: 'Agendar entrega', requiresGestor: true },
     },
     {
       path: '/reviews',
       name: 'reviews',
       component: () => import('@/views/ReviewsView.vue'),
-      meta: { requiresAuth: true },
+      meta: { title: 'Avaliações', requiresAuth: true },
     },
     {
       path: '/reviews/moderation',
       name: 'review-moderation',
       component: () => import('@/views/ReviewModerationView.vue'),
-      meta: { requiresGestor: true },
+      meta: { title: 'Moderação', requiresGestor: true },
     },
     {
       path: '/test-drives',
       name: 'test-drives',
       component: () => import('@/views/TestDrivesView.vue'),
-      meta: { requiresAuth: true },
+      meta: { title: 'Test drives', requiresAuth: true },
     },
     {
       path: '/forbidden',
       name: 'forbidden',
       component: () => import('@/views/ForbiddenView.vue'),
+      meta: { title: 'Sem permissão' },
     },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/views/NotFoundView.vue'),
+      meta: { title: 'Página não encontrada' },
     },
   ],
 })
@@ -97,5 +107,10 @@ export function authGuard(to: RouteLocationNormalized) {
 }
 
 router.beforeEach(authGuard)
+
+// Extra do M2: cada ecrã com o seu título no separador (e no histórico do browser).
+router.afterEach((to) => {
+  document.title = to.meta.title ? `${to.meta.title} · DriveNow` : 'DriveNow'
+})
 
 export default router
