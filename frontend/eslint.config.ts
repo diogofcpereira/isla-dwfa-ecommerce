@@ -1,6 +1,7 @@
 import { globalIgnores } from 'eslint/config'
 import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript'
 import pluginVue from 'eslint-plugin-vue'
+import pluginVueA11y from 'eslint-plugin-vuejs-accessibility'
 import pluginVitest from '@vitest/eslint-plugin'
 import pluginOxlint from 'eslint-plugin-oxlint'
 import skipFormatting from 'eslint-config-prettier/flat'
@@ -19,6 +20,16 @@ export default defineConfigWithVueTs(
   globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
 
   ...pluginVue.configs['flat/essential'],
+  // M2 (extra · acessibilidade): labels, alt, roles e foco verificados em cada .vue.
+  ...pluginVueA11y.configs['flat/recommended'],
+  {
+    name: 'app/a11y-labels',
+    // Um <label> que envolve o campo já o identifica (HTML válido e acessível): não exigir
+    // também o par for/id em todos os formulários.
+    rules: {
+      'vuejs-accessibility/label-has-for': ['error', { required: { some: ['nesting', 'id'] } }],
+    },
+  },
   vueTsConfigs.recommended,
 
   {
