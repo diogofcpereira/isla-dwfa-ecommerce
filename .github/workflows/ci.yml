@@ -66,3 +66,41 @@ jobs:
       - run: npm run check:format
       - run: npm run test:ci
       - run: npm run build-only
+
+  # M2 (extra): o mesmo arranque que o professor faz num clone limpo, em cada push.
+  # Constrói as imagens, sobe o compose.prod.yaml, migra, semeia e testa por HTTP.
+  docker:
+    runs-on: ubuntu-latest
+    needs: [test, frontend]
+    env:
+      COMPOSE: docker compose -f compose.prod.yaml
+    steps:
+      - uses: actions/checkout@v4
+      - name: .env a partir do .env.example (como num clone limpo)
+        run: cp .env.example .env
+      - name: Construir e arrancar (espera pelos healthchecks)
+        run: $COMPOSE up --build -d --wait
+      - name: Migrar e semear
+        run: |
+          $COMPOSE exec -T backend python manage.py migrate --noinput
+          $COMPOSE exec -T backend python manage.py seed
+      - name: check --deploy com HTTPS ligado (o que valeria num deploy a sério)
+        run: $COMPOSE exec -T -e DJANGO_HTTPS=True backend python manage.py check --deploy --fail-level WARNING
+      - name: Testes de fumo por HTTP (Nginx → SPA e API)
+        run: |
+          set -e
+          curl -fsS http://localhost/ | grep -q '<div id="app"></div>'
+          curl -fsS http://localhost/cars/7 | grep -q '<div id="app"></div>'   # F5 numa rota da SPA
+          curl -fsS http://localhost/api/health/ | grep -q '"db": "ok"'
+          curl -fsS 'http://localhost/api/v1/cars/?search=golf' | grep -q '"count"'
+          curl -fsS -X POST http://localhost/api/v1/auth/token/ \
+            -H 'Content-Type: application/json' \
+            -d '{"username": "ana", "password": "drivenow-demo-2026"}' | grep -q '"access"'
+          curl -fsSI http://localhost/ | grep -qi '^x-frame-options: DENY'
+          echo "Tudo a responder."
+      - name: Logs (só se algo falhou)
+        if: failure()
+        run: $COMPOSE logs --no-color
+      - name: Desligar
+        if: always()
+        run: $COMPOSE down -v
