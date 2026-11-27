@@ -748,6 +748,11 @@ paths:
         description: Which field to use when ordering the results.
         schema:
           type: string
+      - in: query
+        name: overdue
+        schema:
+          type: boolean
+        description: 'Em atraso: por entregar e com a data prevista já passada.'
       - name: page
         required: false
         in: query
@@ -969,6 +974,24 @@ paths:
           description: ''
         '409':
           description: O estado da entrega ou da encomenda não o permite.
+  /api/v1/deliveries/summary/:
+    get:
+      operationId: v1_deliveries_summary_retrieve
+      description: |-
+        Resumo para o painel: uma só query (COUNT com FILTER), sobre as entregas que o
+        utilizador pode ver: todas para o gestor, as das suas encomendas para o cliente.
+      tags:
+      - v1
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliverySummary'
+          description: ''
   /api/v1/me/:
     get:
       operationId: v1_me_retrieve
@@ -2114,6 +2137,9 @@ components:
           format: date-time
           readOnly: true
           nullable: true
+        is_overdue:
+          type: boolean
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -2124,6 +2150,7 @@ components:
       - customer
       - delivered_at
       - id
+      - is_overdue
       - order
       - scheduled_for
       - status
@@ -2156,6 +2183,28 @@ components:
         * `scheduled` - Agendada
         * `in_transit` - Em trânsito
         * `delivered` - Entregue
+    DeliverySummary:
+      type: object
+      description: 'GET /deliveries/summary/: quantas entregas há em cada estado e
+        quantas estão em atraso.'
+      properties:
+        scheduled:
+          type: integer
+          description: Agendadas.
+        in_transit:
+          type: integer
+          description: Em trânsito.
+        delivered:
+          type: integer
+          description: Entregues.
+        overdue:
+          type: integer
+          description: Por entregar e com a data prevista já passada.
+      required:
+      - delivered
+      - in_transit
+      - overdue
+      - scheduled
     FuelEnum:
       enum:
       - petrol

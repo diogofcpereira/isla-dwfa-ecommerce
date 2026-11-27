@@ -1,7 +1,8 @@
 <!-- views/DeliveriesView.vue — o ecrã do recurso Delivery (Diogo).
      Cliente: acompanha as entregas das suas encomendas (a API só lhe devolve essas).
      Gestor: vê todas, expede (agendada → em trânsito) e conclui (em trânsito → entregue).
-     O estado e a página vivem no URL (?status=in_transit&page=2). -->
+     O estado, o "só em atraso" e a página vivem no URL (?status=in_transit&overdue=true&page=2).
+     Extra do M2: o gestor tem um resumo por estado e as entregas em atraso em destaque. -->
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -11,7 +12,7 @@ import AsyncState from '@/components/AsyncState.vue'
 import StatusBadge, { type Tone } from '@/components/StatusBadge.vue'
 import { useFetch } from '@/composables/useFetch'
 import { useAuth } from '@/stores/auth'
-import type { Delivery, DeliveryStatus } from '@/types'
+import type { Delivery, DeliveryStatus, DeliverySummary } from '@/types'
 import { dateTime } from '@/utils/format'
 
 const PAGE_SIZE = 20
@@ -39,6 +40,14 @@ const statusFilter = computed({
   set: (value: DeliveryStatus | '') =>
     void router.push({ query: { ...route.query, status: value || undefined, page: undefined } }),
 })
+// ?overdue=true: só as entregas por concluir com a data prevista já passada.
+const overdueOnly = computed({
+  get: () => route.query.overdue === 'true',
+  set: (on: boolean) =>
+    void router.push({
+      query: { ...route.query, overdue: on ? 'true' : undefined, page: undefined },
+    }),
+})
 const page = computed(() => {
   const n = Number(route.query.page)
   return Number.isInteger(n) && n > 0 ? n : 1
@@ -50,12 +59,39 @@ function goTo(n: number) {
 const { data, status, error, reload } = useFetch(() =>
   unwrap(
     api.GET('/api/v1/deliveries/', {
-      params: { query: { status: statusFilter.value || undefined, page: page.value } },
+      params: {
+        query: {
+          status: statusFilter.value || undefined,
+          overdue: overdueOnly.value || undefined,
+          page: page.value,
+        },
+      },
     }),
   ),
 )
 const deliveries = computed(() => data.value?.results ?? [])
 const pages = computed(() => Math.max(1, Math.ceil((data.value?.count ?? 0) / PAGE_SIZE)))
+
+// ---- o resumo do gestor (GET /deliveries/summary/: uma só query na API) ----
+// O cliente não o pede: a lista dele é curta e o resumo é uma ferramenta de gestão.
+const { data: summary, reload: reloadSummary } = useFetch((): Promise<DeliverySummary | null> =>
+  auth.isGestor ? unwrap(api.GET('/api/v1/deliveries/summary/')) : Promise.resolve(null),
+)
+const cards = computed(() => {
+  const s = summary.value
+  if (!s) return []
+  return [
+    { key: 'scheduled', label: 'Agendadas', count: s.scheduled, query: { status: 'scheduled' } },
+    {
+      key: 'in_transit',
+      label: 'Em trânsito',
+      count: s.in_transit,
+      query: { status: 'in_transit' },
+    },
+    { key: 'delivered', label: 'Entregues', count: s.delivered, query: { status: 'delivered' } },
+    { key: 'overdue', label: 'Em atraso', count: s.overdue, query: { overdue: 'true' } },
+  ]
+})
 
 // ---- ações do gestor ----
 const busy = ref<number | null>(null)
@@ -74,6 +110,7 @@ async function advance(delivery: Delivery, step: 'ship' | 'complete') {
     if (data.value) {
       data.value.results = data.value.results.map((d) => (d.id === updated.id ? updated : d))
     }
+    void reloadSummary() // os números do resumo mudaram
   } catch (e) {
     rowError[delivery.id] = errorMessage(e) // 409: o estado já mudou noutra janela
   } finally {
@@ -89,22 +126,41 @@ async function advance(delivery: Delivery, step: 'ship' | 'complete') {
       <RouterLink v-if="auth.isGestor" :to="{ name: 'new-delivery' }">Agendar entrega</RouterLink>
     </header>
 
-    <label class="filter">
-      Estado
-      <select v-model="statusFilter" name="status">
-        <option value="">Todos</option>
-        <option v-for="(label, value) in LABEL" :key="value" :value="value">{{ label }}</option>
-      </select>
-    </label>
+    <ul v-if="cards.length" class="summary" aria-label="Resumo das entregas">
+      <li v-for="card in cards" :key="card.key">
+        <RouterLink
+          :to="{ query: card.query }"
+          :class="{ alert: card.key === 'overdue' && card.count > 0 }"
+        >
+          <strong>{{ card.count }}</strong> {{ card.label }}
+        </RouterLink>
+      </li>
+    </ul>
+
+    <div class="filters">
+      <label class="filter">
+        Estado
+        <select v-model="statusFilter" name="status">
+          <option value="">Todos</option>
+          <option v-for="(label, value) in LABEL" :key="value" :value="value">{{ label }}</option>
+        </select>
+      </label>
+      <label class="check">
+        <input v-model="overdueOnly" type="checkbox" name="overdue" />
+        Só em atraso
+      </label>
+    </div>
 
     <AsyncState
       :status="status"
       :error="error"
       :empty="deliveries.length === 0"
       :empty-text="
-        auth.isGestor
-          ? 'Não há entregas com este estado.'
-          : 'Ainda não há entregas. Aparecem aqui quando uma encomenda paga é agendada.'
+        overdueOnly
+          ? 'Nenhuma entrega em atraso.'
+          : auth.isGestor
+            ? 'Não há entregas com este estado.'
+            : 'Ainda não há entregas. Aparecem aqui quando uma encomenda paga é agendada.'
       "
       @retry="reload"
     >
@@ -121,7 +177,12 @@ async function advance(delivery: Delivery, step: 'ship' | 'complete') {
         <tbody>
           <tr v-for="d in deliveries" :key="d.id">
             <td>#{{ d.order }}</td>
-            <td><StatusBadge :label="d.status_display" :tone="TONE[d.status]" /></td>
+            <td>
+              <span class="badges">
+                <StatusBadge :label="d.status_display" :tone="TONE[d.status]" />
+                <StatusBadge v-if="d.is_overdue" label="Em atraso" tone="bad" />
+              </span>
+            </td>
             <td>
               {{ dateTime(d.scheduled_for) }}
               <small v-if="d.delivered_at">entregue {{ dateTime(d.delivered_at) }}</small>
@@ -166,10 +227,52 @@ async function advance(delivery: Delivery, step: 'ship' | 'complete') {
   align-items: baseline;
   justify-content: space-between;
 }
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+.summary a {
+  display: block;
+  min-width: 7.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+}
+.summary strong {
+  display: block;
+  font-size: 1.5rem;
+}
+.summary a.alert {
+  border-color: #9b1c2e;
+  color: #9b1c2e;
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
 .filter {
   display: inline-grid;
   gap: 0.25rem;
-  margin-bottom: 1rem;
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 table {
   width: 100%;

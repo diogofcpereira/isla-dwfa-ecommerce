@@ -16,8 +16,9 @@ import {
   testRouter,
 } from '@/test/helpers'
 import App from '@/App.vue'
-import type { Car, Order } from '@/types'
+import type { Car, Delivery, Order } from '@/types'
 import CarsView from '@/views/CarsView.vue'
+import DeliveriesView from '@/views/DeliveriesView.vue'
 import LoginView from '@/views/LoginView.vue'
 import NewDeliveryView from '@/views/NewDeliveryView.vue'
 import NewOrderView from '@/views/NewOrderView.vue'
@@ -45,6 +46,20 @@ const paid: Order = {
   created_at: '2026-11-20T10:00:00Z',
   items: [{ id: 1, car: 1, car_name: 'Volkswagen Golf', quantity: 1, unit_price: '32500.00' }],
   total: '32500.00',
+}
+
+const late: Delivery = {
+  id: 5,
+  order: 12,
+  customer: 1,
+  status: 'in_transit',
+  status_display: 'Em trânsito',
+  scheduled_for: '2026-11-20T10:00:00Z',
+  address: 'Rua das Flores, 10, Porto',
+  notes: '',
+  delivered_at: null,
+  is_overdue: true,
+  created_at: '2026-11-18T10:00:00Z',
 }
 
 /** Monta o ecrã numa rota, ligado ao documento, e espera pelos pedidos. */
@@ -121,6 +136,15 @@ describe('acessibilidade (axe-core)', () => {
     await flushPromises()
 
     expect(wrapper.find('#scheduled-error').exists()).toBe(true)
+    expect(await a11yViolations(wrapper.element)).toEqual([])
+  })
+
+  it('entregas do gestor, com o resumo e uma entrega em atraso (extra do Diogo)', async () => {
+    loginAs('gestor', ['gestores'])
+    stubFetch(json(page([late])), json({ scheduled: 0, in_transit: 1, delivered: 0, overdue: 1 }))
+    const wrapper = await mountScreen(DeliveriesView, '/deliveries', 'deliveries')
+
+    expect(wrapper.find('.summary').exists()).toBe(true)
     expect(await a11yViolations(wrapper.element)).toEqual([])
   })
 })

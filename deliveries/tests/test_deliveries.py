@@ -157,3 +157,67 @@ def test_two_simultaneous_deliveries_for_the_same_order_give_400_not_500(actors,
     assert r.status_code == 400
     assert "order" in r.json()["errors"]
     assert Delivery.objects.filter(order=order).count() == 1
+
+
+# ---- M2 (extra do Diogo): entregas em atraso e o resumo para o painel ----
+
+
+def late_delivery_for(order, **kwargs):
+    """Uma entrega que já devia ter chegado: a data prevista foi ontem."""
+    delivery = delivery_for(order, **kwargs)
+    Delivery.objects.filter(pk=delivery.pk).update(scheduled_for=timezone.now() - timedelta(days=1))
+    return delivery
+
+
+def test_overdue_filter_and_flag(actors):
+    late = late_delivery_for(paid_order())
+    on_time = delivery_for(paid_order())
+    api = as_(actors["gestor"])
+
+    r = api.get("/api/v1/deliveries/", {"overdue": "true"})
+    assert [d["id"] for d in r.json()["results"]] == [late.id]
+    assert r.json()["results"][0]["is_overdue"] is True
+
+    r = api.get("/api/v1/deliveries/", {"overdue": "false"})
+    assert [d["id"] for d in r.json()["results"]] == [on_time.id]
+    assert r.json()["results"][0]["is_overdue"] is False
+
+
+def test_a_late_delivery_that_was_completed_is_not_overdue(actors):
+    late = late_delivery_for(paid_order())
+    api = as_(actors["gestor"])
+    assert api.post(f"/api/v1/deliveries/{late.id}/complete/").status_code == 200
+
+    assert api.get("/api/v1/deliveries/", {"overdue": "true"}).json()["count"] == 0
+    assert api.get(f"/api/v1/deliveries/{late.id}/").json()["is_overdue"] is False
+
+
+@pytest.mark.parametrize(
+    "role,expected_status,expected",
+    [
+        ("anon", 401, None),
+        # O cliente só conta as entregas das suas encomendas.
+        ("customer", 200, {"scheduled": 1, "in_transit": 0, "delivered": 0, "overdue": 1}),
+        ("gestor", 200, {"scheduled": 2, "in_transit": 1, "delivered": 1, "overdue": 1}),
+    ],
+)
+def test_summary_counts_what_each_role_can_see(actors, role, expected_status, expected):
+    late_delivery_for(paid_order(customer=actors["customer"].customer))  # do cliente, em atraso
+    delivery_for(paid_order())  # agendada, de outro cliente
+    delivery_for(paid_order(), status="in_transit")
+    delivery_for(paid_order(), status="delivered", delivered_at=timezone.now())
+
+    r = as_(actors[role]).get("/api/v1/deliveries/summary/")
+    assert r.status_code == expected_status
+    if expected is not None:
+        assert r.json() == expected
+
+
+def test_summary_is_a_single_query_whatever_the_number_of_deliveries(
+    actors, django_assert_max_num_queries
+):
+    for order in OrderFactory.create_batch(25, status="paid"):
+        delivery_for(order)
+    with django_assert_max_num_queries(2):  # grupos + um SELECT COUNT(...) FILTER (...)
+        r = as_(actors["gestor"]).get("/api/v1/deliveries/summary/")
+    assert r.json()["scheduled"] == 25

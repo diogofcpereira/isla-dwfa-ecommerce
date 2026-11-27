@@ -10,6 +10,8 @@ from .models import Delivery
 class DeliverySerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     customer = serializers.IntegerField(source="order.customer_id", read_only=True)
+    # M2 (extra): o mesmo critério do ?overdue=true, para a SPA marcar a linha.
+    is_overdue = serializers.SerializerMethodField()
 
     class Meta:
         model = Delivery
@@ -23,6 +25,7 @@ class DeliverySerializer(serializers.ModelSerializer):
             "address",
             "notes",
             "delivered_at",
+            "is_overdue",
             "created_at",
         ]
         # O estado só muda pelas ações /ship/ e /complete/ (services.py).
@@ -47,6 +50,11 @@ class DeliverySerializer(serializers.ModelSerializer):
             fields["order"].read_only = True
         return fields
 
+    def get_is_overdue(self, delivery) -> bool:
+        return (
+            delivery.status != Delivery.Status.DELIVERED and delivery.scheduled_for < timezone.now()
+        )
+
     def validate_order(self, order):
         if order.status != Order.Status.PAID:
             raise serializers.ValidationError("Só se agenda a entrega de uma encomenda paga.")
@@ -56,3 +64,12 @@ class DeliverySerializer(serializers.ModelSerializer):
         if value <= timezone.now():
             raise serializers.ValidationError("A data da entrega tem de ser no futuro.")
         return value
+
+
+class DeliverySummarySerializer(serializers.Serializer):
+    """GET /deliveries/summary/: quantas entregas há em cada estado e quantas estão em atraso."""
+
+    scheduled = serializers.IntegerField(help_text="Agendadas.")
+    in_transit = serializers.IntegerField(help_text="Em trânsito.")
+    delivered = serializers.IntegerField(help_text="Entregues.")
+    overdue = serializers.IntegerField(help_text="Por entregar e com a data prevista já passada.")
