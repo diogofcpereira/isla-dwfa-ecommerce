@@ -124,6 +124,30 @@ jobs:
           curl -fsSI http://localhost/ | grep -qi '^x-frame-options: DENY'
           curl -fsSI http://localhost/cars/7 | grep -qi "^content-security-policy: default-src 'self'"
           echo "Tudo a responder."
+      # M2 (extra · e2e): o percurso de um utilizador num Chromium a sério, contra estes
+      # contentores (a SPA servida pelo Nginx, a API, a base de dados e o seed).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Testes e2e (Playwright) contra http://localhost
+        working-directory: frontend
+        env:
+          E2E_BASE_URL: http://localhost
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npm run test:e2e
+      - name: Relatório do Playwright (com o trace, só se falhou)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          if-no-files-found: ignore
       # M2 (extra · segurança): vulnerabilidades HIGH/CRITICAL com correção disponível nas duas
       # imagens, numa tabela no resumo do run. Só relatório (não bloqueia): sai um CVE novo quase
       # todos os dias, e a entrega não deve depender disso; as imagens já aplicam as correções.
