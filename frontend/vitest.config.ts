@@ -9,6 +9,15 @@ export default mergeConfig(
       environment: 'jsdom',
       exclude: [...configDefaults.exclude, 'e2e/**'],
       root: fileURLToPath(new URL('./', import.meta.url)),
+      // M2 (extra · cobertura): `npm run test:coverage` mede o código da SPA (não os testes
+      // nem os tipos gerados) e FALHA se descer abaixo destes mínimos. O CI corre-o em cada push.
+      coverage: {
+        provider: 'v8',
+        include: ['src/**/*.{ts,vue}'],
+        exclude: ['src/**/__tests__/**', 'src/test/**', 'src/api/schema.d.ts', 'src/main.ts'],
+        reporter: ['text-summary', 'html', 'json-summary'],
+        thresholds: { statements: 75, branches: 65, functions: 65, lines: 75 },
+      },
     },
   }),
 )

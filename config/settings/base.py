@@ -145,6 +145,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# M2 (extra): o remetente dos emails ao cliente sobre as entregas (deliveries/notifications.py).
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="DriveNow <entregas@drivenow.example>")
+
 # Ficha 03 · Parte 1: tempos de vida e rotação dos tokens
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),

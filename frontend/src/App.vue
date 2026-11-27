@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 
 import { useAuth } from '@/stores/auth'
@@ -18,9 +18,20 @@ watch(
     }
   },
 )
+
+// Acessibilidade (extra do M2): numa SPA o browser não anuncia a mudança de página. Ao mudar
+// de ecrã, o foco passa para o conteúdo e o leitor de ecrã lê a página nova. Só quando muda
+// o caminho: mudar a pesquisa ou a página da lista (?search=, ?page=) não tira o foco do campo.
+const main = ref<HTMLElement | null>(null)
+router.afterEach((to, from) => {
+  if (from.matched.length > 0 && to.path !== from.path) {
+    void nextTick(() => main.value?.focus())
+  }
+})
 </script>
 
 <template>
+  <a class="skip-link" href="#conteudo">Saltar para o conteúdo</a>
   <header class="topbar">
     <RouterLink :to="{ name: 'cars' }" class="brand">DriveNow</RouterLink>
     <nav aria-label="Principal">
@@ -40,12 +51,28 @@ watch(
     </nav>
   </header>
 
-  <main class="content">
+  <main id="conteudo" ref="main" class="content" tabindex="-1">
     <RouterView />
   </main>
 </template>
 
 <style scoped>
+/* Invisível até receber o foco (Tab logo ao abrir a página): salta o menu. */
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -3rem;
+  padding: 0.5rem 0.75rem;
+  background: #1d5a8c;
+  color: #fff;
+  z-index: 10;
+}
+.skip-link:focus {
+  top: 0.5rem;
+}
+.content:focus {
+  outline: none; /* o foco aqui é para o leitor de ecrã, não precisa de moldura */
+}
 .topbar {
   display: flex;
   flex-wrap: wrap;

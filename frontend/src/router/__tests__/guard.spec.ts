@@ -34,4 +34,15 @@ describe('authGuard', () => {
   it('rota pública deixa passar sem sessão', () => {
     expect(authGuard(to('/cars', {}))).toBe(true)
   })
+
+  it('cada rota tem um título e o separador mostra-o depois de navegar', async () => {
+    const { default: router } = await import('@/router')
+    const untitled = router
+      .getRoutes()
+      .filter((route) => route.path !== '/' && !route.meta.title)
+      .map((route) => route.path)
+    expect(untitled).toEqual([]) // uma rota nova sem título faz este teste falhar
+    await router.push('/cars')
+    expect(document.title).toBe('Viaturas · DriveNow')
+  })
 })

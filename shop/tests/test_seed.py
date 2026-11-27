@@ -5,6 +5,8 @@ import pytest
 from django.contrib.auth import authenticate
 from django.core.management import call_command
 
+from deliveries.filters import overdue_q
+from deliveries.models import Delivery
 from shop.management.commands.seed import DEMO_CUSTOMERS, DEMO_GESTOR, DEMO_PASSWORD
 from shop.models import Car, Customer, Order, Payment
 from shop.permissions import is_gestor
@@ -27,6 +29,8 @@ def test_seed_creates_demo_accounts_and_orders_in_every_state():
     # Cada encomenda paga ou entregue tem o seu pagamento, com o total certo.
     assert Payment.objects.count() == Order.objects.filter(status__in=["paid", "delivered"]).count()
     assert not Car.objects.filter(stock__lt=0).exists()
+    # M2: o painel das entregas tem sempre uma em atraso para mostrar.
+    assert Delivery.objects.filter(overdue_q()).count() >= 1
 
 
 def test_seed_twice_does_not_duplicate():

@@ -58,6 +58,9 @@ async function submit() {
           required
         />
       </label>
+      <p v-if="auth.expired && !error" role="status" class="info">
+        A tua sessão expirou. Entra de novo para continuares onde estavas.
+      </p>
       <p v-if="error" role="alert" class="error">{{ error }}</p>
       <button type="submit" :disabled="submitting">
         {{ submitting ? 'A entrar…' : 'Entrar' }}
@@ -84,6 +87,10 @@ input {
 }
 .error {
   color: #b00020;
+  margin: 0;
+}
+.info {
+  color: #1d5a8c;
   margin: 0;
 }
 </style>

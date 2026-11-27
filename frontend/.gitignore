@@ -37,3 +37,7 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Playwright (extra do M2: testes e2e)
+/test-results/
+/playwright-report/

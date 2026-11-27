@@ -23,6 +23,7 @@ export type PaymentMethod = Schemas['MethodEnum'] // 'transfer' | 'financing' | 
 // ---- recursos do M1 (um por membro) ----
 export type Delivery = Schemas['Delivery'] // Diogo
 export type DeliveryStatus = Schemas['DeliveryStatusEnum'] // 'scheduled' | 'in_transit' | 'delivered'
+export type DeliverySummary = Schemas['DeliverySummary'] // M2: o resumo do painel do gestor
 export type Review = Schemas['Review'] // Filipe
 export type ReviewStatus = Schemas['ReviewStatusEnum'] // 'pending' | 'approved' | 'hidden'
 export type TestDrive = Schemas['TestDrive'] // Rúben

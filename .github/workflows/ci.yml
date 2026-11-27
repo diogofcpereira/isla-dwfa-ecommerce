@@ -34,7 +34,21 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run python manage.py makemigrations --check --dry-run
-      - run: uv run pytest
+      # M2 (extra): o schema.yaml commitado tem de ser o que a API gera hoje — sem avisos.
+      # Se alguém mudar um serializer e se esquecer de o regenerar, o CI fica vermelho.
+      - name: schema.yaml em dia com a API
+        run: |
+          uv run python manage.py spectacular --file schema.yaml --validate --fail-on-warn
+          git diff --exit-code schema.yaml
+      # M2 (extra · cobertura): falha abaixo de 95% (mínimo no pyproject.toml) e põe a
+      # tabela da cobertura no resumo do run (Actions → o run → Summary).
+      - run: uv run pytest --cov
+      - name: Cobertura do backend no resumo do run
+        if: always()
+        run: |
+          echo "### Cobertura do backend (pytest)" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          uv run coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY" || true
 
   # Frontend (M2): tipos, lint, formatação, testes e build da SPA.
   frontend:
@@ -50,8 +64,107 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
+      # M2 (extra): os tipos da SPA têm de ter sido gerados a partir do schema.yaml commitado.
+      - name: schema.d.ts em dia com o schema.yaml
+        run: |
+          npm run gen:api
+          git diff --exit-code src/api/schema.d.ts
       - run: npm run type-check
       - run: npm run check:lint
       - run: npm run check:format
-      - run: npm run test:ci
+      # M2 (extra · cobertura): Vitest com mínimos (vitest.config.ts); o relatório HTML fica
+      # para descarregar no run (Artifacts → cobertura-frontend).
+      - run: npm run test:coverage
+      - name: Cobertura do frontend no resumo do run
+        if: always()
+        run: |
+          node -e "
+          const t = require('./coverage/coverage-summary.json').total
+          const rows = ['statements', 'branches', 'functions', 'lines'].map((k) => '| ' + k + ' | ' + t[k].pct + '% |')
+          console.log(['### Cobertura do frontend (Vitest)', '', '| | % |', '|---|---|', ...rows].join('\\n'))
+          " >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Relatório HTML da cobertura do frontend
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-frontend
+          path: frontend/coverage/
+          if-no-files-found: ignore
       - run: npm run build-only
+
+  # M2 (extra): o mesmo arranque que o professor faz num clone limpo, em cada push.
+  # Constrói as imagens, sobe o compose.prod.yaml, migra, semeia e testa por HTTP.
+  docker:
+    runs-on: ubuntu-latest
+    needs: [test, frontend]
+    env:
+      COMPOSE: docker compose -f compose.prod.yaml
+    steps:
+      - uses: actions/checkout@v4
+      - name: .env a partir do .env.example (como num clone limpo)
+        run: cp .env.example .env
+      - name: Construir e arrancar (espera pelos healthchecks)
+        run: $COMPOSE up --build -d --wait
+      - name: Migrar e semear
+        run: |
+          $COMPOSE exec -T backend python manage.py migrate --noinput
+          $COMPOSE exec -T backend python manage.py seed
+      - name: check --deploy com HTTPS ligado (o que valeria num deploy a sério)
+        run: $COMPOSE exec -T -e DJANGO_HTTPS=True backend python manage.py check --deploy --fail-level WARNING
+      - name: Testes de fumo por HTTP (Nginx → SPA e API)
+        run: |
+          set -e
+          curl -fsS http://localhost/ | grep -q '<div id="app"></div>'
+          curl -fsS http://localhost/cars/7 | grep -q '<div id="app"></div>'   # F5 numa rota da SPA
+          curl -fsS http://localhost/api/health/ | grep -q '"db": "ok"'
+          curl -fsS 'http://localhost/api/v1/cars/?search=golf' | grep -q '"count"'
+          curl -fsS -X POST http://localhost/api/v1/auth/token/ \
+            -H 'Content-Type: application/json' \
+            -d '{"username": "ana", "password": "drivenow-demo-2026"}' | grep -q '"access"'
+          curl -fsSI http://localhost/ | grep -qi '^x-frame-options: DENY'
+          curl -fsSI http://localhost/cars/7 | grep -qi "^content-security-policy: default-src 'self'"
+          echo "Tudo a responder."
+      # M2 (extra · e2e): o percurso de um utilizador num Chromium a sério, contra estes
+      # contentores (a SPA servida pelo Nginx, a API, a base de dados e o seed).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Testes e2e (Playwright) contra http://localhost
+        working-directory: frontend
+        env:
+          E2E_BASE_URL: http://localhost
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npm run test:e2e
+      - name: Relatório do Playwright (com o trace, só se falhou)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          if-no-files-found: ignore
+      # M2 (extra · segurança): vulnerabilidades HIGH/CRITICAL com correção disponível nas duas
+      # imagens, numa tabela no resumo do run. Só relatório (não bloqueia): sai um CVE novo quase
+      # todos os dias, e a entrega não deve depender disso; as imagens já aplicam as correções.
+      - name: Vulnerabilidades das imagens (Trivy)
+        if: success() || failure()
+        run: |
+          echo "### Vulnerabilidades HIGH/CRITICAL com correção (Trivy)" >> "$GITHUB_STEP_SUMMARY"
+          for img in drivenow-prod-backend drivenow-prod-web; do
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.76.2 image \
+              --quiet --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 --format table "$img" \
+              >> "$GITHUB_STEP_SUMMARY" || echo "(não foi possível analisar $img)" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          done
+      - name: Logs (só se algo falhou)
+        if: failure()
+        run: $COMPOSE logs --no-color
+      - name: Desligar
+        if: always()
+        run: $COMPOSE down -v

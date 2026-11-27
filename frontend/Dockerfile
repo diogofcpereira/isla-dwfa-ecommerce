@@ -17,10 +17,17 @@ ENV VITE_API_URL=""
 RUN npm run build
 
 # ---------- fase 2: runtime (Nginx) ----------
-FROM nginx:1.28-alpine AS runtime
+# 1.30 = a linha "stable" atual do Nginx (a 1.28 deixou de receber correções na imagem).
+FROM nginx:1.30-alpine AS runtime
+
+# Extra do M2 (segurança da imagem): aplica as correções de segurança publicadas desde que a
+# imagem base foi gerada. O Trivy, no CI, confirma que não ficam vulnerabilidades HIGH/CRITICAL
+# com correção disponível.
+RUN apk upgrade --no-cache
 
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY nginx/security-headers.conf /etc/nginx/snippets/security-headers.conf
+COPY nginx/spa-security-headers.conf /etc/nginx/snippets/spa-security-headers.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80

@@ -303,6 +303,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/deliveries/summary/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Resumo para o painel: uma só query (COUNT com FILTER), sobre as entregas que o
+         *     utilizador pode ver: todas para o gestor, as das suas encomendas para o cliente.
+         */
+        get: operations["v1_deliveries_summary_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/": {
         parameters: {
             query?: never;
@@ -720,6 +740,7 @@ export interface components {
             notes?: string;
             /** Format: date-time */
             readonly delivered_at: string | null;
+            readonly is_overdue: boolean;
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -737,6 +758,17 @@ export interface components {
          * @enum {string}
          */
         DeliveryStatusEnum: "scheduled" | "in_transit" | "delivered";
+        /** @description GET /deliveries/summary/: quantas entregas há em cada estado e quantas estão em atraso. */
+        DeliverySummary: {
+            /** @description Agendadas. */
+            scheduled: number;
+            /** @description Em trânsito. */
+            in_transit: number;
+            /** @description Entregues. */
+            delivered: number;
+            /** @description Por entregar e com a data prevista já passada. */
+            overdue: number;
+        };
         /**
          * @description * `petrol` - Gasolina
          *     * `diesel` - Gasóleo
@@ -1614,6 +1646,8 @@ export interface operations {
                 order?: number;
                 /** @description Which field to use when ordering the results. */
                 ordering?: string;
+                /** @description Em atraso: por entregar e com a data prevista já passada. */
+                overdue?: boolean;
                 /** @description A page number within the paginated result set. */
                 page?: number;
                 /** @description A search term. */
@@ -1799,6 +1833,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    v1_deliveries_summary_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliverySummary"];
+                };
             };
         };
     };

@@ -15,9 +15,11 @@
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
     "check:lint": "oxlint . && eslint .",
-    "format": "prettier --write --experimental-cli src/",
-    "check:format": "prettier --check src/",
-    "gen:api": "openapi-typescript ../schema.yaml -o src/api/schema.d.ts"
+    "format": "prettier --write --experimental-cli src/ e2e/",
+    "check:format": "prettier --check src/ e2e/",
+    "gen:api": "openapi-typescript ../schema.yaml -o src/api/schema.d.ts",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "openapi-fetch": "^0.17.0",
@@ -26,18 +28,22 @@
     "vue-router": "^5.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@tsconfig/node24": "^24.0.5",
     "@types/jsdom": "^30.0.0",
     "@types/node": "^24.13.4",
     "@vitejs/plugin-vue": "^6.0.8",
+    "@vitest/coverage-v8": "^4.1.12",
     "@vitest/eslint-plugin": "^1.6.27",
     "@vue/eslint-config-typescript": "^14.9.0",
     "@vue/test-utils": "^2.5.0",
     "@vue/tsconfig": "^0.9.1",
+    "axe-core": "^4.14.1",
     "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-oxlint": "~1.82.0",
     "eslint-plugin-vue": "~10.11.0",
+    "eslint-plugin-vuejs-accessibility": "^2.6.3",
     "jiti": "^2.7.0",
     "jsdom": "^30.0.1",
     "npm-run-all2": "^9.0.3",

@@ -26,6 +26,16 @@ SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30 if HTTPS else 0  # HSTS: só HTTPS duran
 SECURE_HSTS_INCLUDE_SUBDOMAINS = HTTPS  # ... também nos subdomínios
 SECURE_HSTS_PRELOAD = HTTPS  # Ficha 03 · Parte 3: resolve o aviso security.W021
 
+# M2 (extra): os emails das entregas. Por omissão vão para a consola, ou seja, para
+# `docker compose logs backend` (o compose local não tem servidor de email). Num deploy a
+# sério: EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend e o servidor no .env.
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = env("EMAIL_HOST", default="localhost")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+
 # Os logs vão para a consola: `docker compose logs backend` mostra-os.
 LOGGING = {
     "version": 1,

@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 
 from accounts.factories import UserFactory
+from deliveries.filters import overdue_q
 from deliveries.models import Delivery
 from deliveries.services import complete_delivery, ship_delivery
 from reviews.models import Review
@@ -70,6 +71,7 @@ class Command(BaseCommand):
         missing = opts["orders"] - Order.objects.count()
         for _ in range(max(missing, 0)):
             self.order(random.choice(customers), random.choice(STATES))
+        self.overdue_delivery()
         self.reviews()
         self.test_drives()
 
@@ -148,6 +150,23 @@ class Command(BaseCommand):
             },
         )
         return delivery
+
+    def overdue_delivery(self):
+        """M2: pelo menos uma entrega em atraso, para o painel do gestor ter o que mostrar.
+
+        A API não aceita datas no passado (o atraso acontece com o tempo); aqui a data
+        de uma entrega por concluir passa para ontem. Se já houver uma, não mexe em nada.
+        """
+        if Delivery.objects.filter(overdue_q()).exists():
+            return
+        yesterday = timezone.now() - timedelta(days=1)
+        pending = Delivery.objects.exclude(status=Delivery.Status.DELIVERED).order_by("id")
+        if pending.exists():
+            pending.filter(pk=pending.first().pk).update(scheduled_for=yesterday)
+            return
+        order = Order.objects.filter(status=Order.Status.PAID, delivery__isnull=True).first()
+        if order:
+            self.delivery(order, days=-1)
 
     def reviews(self):
         """Avaliações de demonstração: só de viaturas compradas (encomenda paga ou entregue)."""

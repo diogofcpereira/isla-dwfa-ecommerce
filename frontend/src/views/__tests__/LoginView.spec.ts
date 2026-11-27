@@ -1,9 +1,11 @@
-// src/views/__tests__/LoginView.spec.ts — um 401 mostra a mensagem e NÃO navega.
+// src/views/__tests__/LoginView.spec.ts — um 401 mostra a mensagem e NÃO navega;
+// e uma sessão que expirou é explicada.
 import { flushPromises, mount } from '@vue/test-utils'
-import { createPinia } from 'pinia'
+import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
+import { useAuth } from '@/stores/auth'
 import LoginView from '@/views/LoginView.vue'
 
 const json = (body: unknown, status = 200) =>
@@ -46,5 +48,20 @@ describe('LoginView', () => {
     expect(push).not.toHaveBeenCalled()
     expect(router.currentRoute.value.path).toBe('/login')
     expect(wrapper.find('button[type="submit"]').attributes('disabled')).toBeUndefined()
+  })
+
+  it('depois de a sessão expirar, explica porquê', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    useAuth().expired = true
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/login', name: 'login', component: LoginView }],
+    })
+    await router.push('/login?next=/test-drives')
+
+    const wrapper = mount(LoginView, { global: { plugins: [pinia, router] } })
+
+    expect(wrapper.find('[role="status"]').text()).toContain('A tua sessão expirou')
   })
 })
