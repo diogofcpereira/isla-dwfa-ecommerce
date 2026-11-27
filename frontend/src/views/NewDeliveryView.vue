@@ -123,6 +123,8 @@ async function submit() {
         <p v-if="errors.notes" class="field-error">{{ errors.notes }}</p>
 
         <p v-if="formError" role="alert" class="field-error">{{ formError }}</p>
+        <!-- Extra do M2: deliveries/notifications.py, depois do commit. -->
+        <p class="hint">O cliente recebe um email com a data e a morada da entrega.</p>
         <button type="submit" :disabled="submitting">
           {{ submitting ? 'A agendar…' : 'Agendar' }}
         </button>
@@ -150,6 +152,11 @@ textarea {
 .field-error {
   margin: 0;
   color: #b00020;
+  font-size: 0.9rem;
+}
+.hint {
+  margin: 0;
+  color: #6b6b6b;
   font-size: 0.9rem;
 }
 </style>
