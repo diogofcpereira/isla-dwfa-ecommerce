@@ -42,7 +42,7 @@ da aula). Nenhuma lista tem N+1: as queries não passam de 5 em nenhum endpoint.
 | Elemento | Endpoint | Antes | Depois | O que mudou |
 |---|---|---|---|---|
 | Diogo Pereira | `GET /api/v1/deliveries/` (gestor) | 4 queries · 40.6 ms na BD · mediana 59.6 ms · p95 84.4 ms | 4 queries · 5.6 ms na BD · mediana 20.8 ms · p95 23.6 ms | Índice em `scheduled_for`, a ordenação da lista: o plano passou de juntar todas as entregas à encomenda e ao cliente e só depois ordenar (`Hash Join` + `Sort`) para ler as 20 primeiras pelo índice (`Index Scan using ix_delivery_scheduled_for`). [commit](https://github.com/diogofcpereira/isla-dwfa-ecommerce/commit/510daa40cbaf152d37c33e5e06249bac7519c53e) |
-| Filipe Cardoso | `GET /api/v1/reviews/` | (a preencher pelo Filipe) | | |
+| Filipe Cardoso | `GET /api/v1/reviews/` (gestor) | 4 queries · 9.3 ms na BD · mediana 31.3 ms · p95 38.1 ms | 4 queries · 8.4 ms na BD · mediana 30.7 ms · p95 36.3 ms | Índice em `-created_at`, a ordenação da lista (a mais recente primeiro): o plano passou de juntar todas as avaliações à viatura, à marca, ao cliente e ao utilizador e só depois ordenar (`Hash Join` + `Sort`) para ler as 20 primeiras pelo índice (`Index Scan using ix_review_created_desc`). [commit](https://github.com/diogofcpereira/isla-dwfa-ecommerce/commit/2b402fc323fd90e2c76182321ea197d92718fbbc) |
 | Rúben Afonso | `GET /api/v1/test-drives/` | (a preencher pelo Rúben) | | |
 
 Cada correção tem um teste que conta queries (com 5 linhas e com 20, o mesmo número). O do
@@ -63,3 +63,19 @@ Diogo é `deliveries/tests/test_ficha06_performance.py`.
 - **As medições:** `docs/ficha-06/deliveries-antes.txt` e `docs/ficha-06/deliveries-depois.txt`,
   com o mesmo comando e os mesmos dados. O tempo que fica na base de dados é sobretudo o
   `COUNT(*)` da paginação.
+
+### Filipe: as avaliações
+
+- **O que o middleware dizia:** poucas queries (4) e muito tempo na base de dados, como nas
+  entregas.
+- **O que o plano mostrou** (`docs/ficha-06/explain-reviews-antes.txt`): a página junta as
+  20 000 avaliações à viatura, à marca, ao cliente e ao utilizador (`Hash Join` × 4) e só
+  depois ordena por `created_at DESC` (`Sort`) para ficar com 20. Os índices que havia,
+  `(car, status)` e o da restrição única `(car, customer)`, começam pela viatura e não servem
+  esta ordenação.
+- **A alteração** (`reviews/migrations/0002_review_created_at_index.py`): um índice em
+  `-created_at`, no sentido da ordenação. O plano passou a `Index Scan using
+  ix_review_created_desc` com `Nested Loop`: lê as 20 mais recentes e só junta essas
+  (`docs/ficha-06/explain-reviews-depois.txt`).
+- **As medições:** `docs/ficha-06/reviews-antes.txt` e `docs/ficha-06/reviews-depois.txt`,
+  com o mesmo comando e os mesmos dados. O teste é `reviews/tests/test_ficha06_performance.py`.
