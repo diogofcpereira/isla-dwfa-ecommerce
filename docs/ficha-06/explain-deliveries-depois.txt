@@ -1,0 +1,23 @@
+Limit  (cost=0.86..13.23 rows=20 width=147) (actual time=0.172..2.050 rows=20 loops=1)
+  Buffers: shared hit=84 read=2
+  ->  Nested Loop  (cost=0.86..18547.80 rows=30009 width=147) (actual time=0.171..2.045 rows=20 loops=1)
+        Buffers: shared hit=84 read=2
+        ->  Nested Loop  (cost=0.58..17201.45 rows=30009 width=104) (actual time=0.148..1.294 rows=20 loops=1)
+              Buffers: shared hit=66 read=2
+              ->  Index Scan using ix_delivery_scheduled_for on deliveries_delivery  (cost=0.29..3681.84 rows=30009 width=72) (actual time=0.059..0.088 rows=20 loops=1)
+                    Buffers: shared hit=6 read=2
+              ->  Index Scan using shop_order_pkey on shop_order  (cost=0.29..0.45 rows=1 width=32) (actual time=0.059..0.059 rows=1 loops=20)
+                    Index Cond: (id = deliveries_delivery.order_id)
+                    Buffers: shared hit=60
+        ->  Memoize  (cost=0.29..0.31 rows=1 width=43) (actual time=0.037..0.037 rows=1 loops=20)
+              Cache Key: shop_order.customer_id
+              Cache Mode: logical
+              Hits: 14  Misses: 6  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+              Buffers: shared hit=18
+              ->  Index Scan using shop_customer_pkey on shop_customer  (cost=0.28..0.30 rows=1 width=43) (actual time=0.118..0.118 rows=1 loops=6)
+                    Index Cond: (id = shop_order.customer_id)
+                    Buffers: shared hit=18
+Planning:
+  Buffers: shared hit=366 read=1
+Planning Time: 1.422 ms
+Execution Time: 2.300 ms

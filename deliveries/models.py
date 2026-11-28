@@ -40,6 +40,11 @@ class Delivery(models.Model):
         indexes = [
             # A agenda do gestor: entregas por estado, ordenadas por data.
             models.Index(fields=["status", "scheduled_for"], name="ix_delivery_status_date"),
+            # Ficha 06: a lista do gestor, sem filtro, ordenada por data (o ordering da view).
+            # O índice de cima começa pelo estado e não serve esta ordenação: sem este, o
+            # PostgreSQL juntava as 30 000 entregas à encomenda e ao cliente e só depois
+            # ordenava para ficar com 20.
+            models.Index(fields=["scheduled_for"], name="ix_delivery_scheduled_for"),
         ]
 
     def __str__(self):

@@ -1,0 +1,9 @@
+http://localhost:8000/api/v1/deliveries/
+  30 pedidos · requests, 1 em paralelo · parallel, HTTP [200]
+  resposta · response       5.8 kB
+  mediana · median         59.6 ms
+  p95                      84.4 ms
+  max                      85.7 ms
+  débito · throughput      15.5 req/s
+  servidor · server           4 queries, 40.6 ms na BD · in the DB
+| `GET /api/v1/deliveries/` | gestor | 4 | 40.6 | 59.6 | 84.4 |

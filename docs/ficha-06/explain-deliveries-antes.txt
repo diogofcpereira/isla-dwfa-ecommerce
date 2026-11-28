@@ -1,0 +1,28 @@
+Limit  (cost=3824.54..3824.59 rows=20 width=147) (actual time=71.351..71.357 rows=20 loops=1)
+  Buffers: shared hit=1598
+  ->  Sort  (cost=3824.54..3899.56 rows=30009 width=147) (actual time=71.349..71.353 rows=20 loops=1)
+        Sort Key: deliveries_delivery.scheduled_for
+        Sort Method: top-N heapsort  Memory: 31kB
+        Buffers: shared hit=1598
+        ->  Hash Join  (cost=1519.43..3026.01 rows=30009 width=147) (actual time=27.934..63.549 rows=30009 loops=1)
+              Hash Cond: (shop_order.customer_id = shop_customer.id)
+              Buffers: shared hit=1595
+              ->  Hash Join  (cost=1455.20..2882.84 rows=30009 width=104) (actual time=26.763..57.405 rows=30009 loops=1)
+                    Hash Cond: (shop_order.id = deliveries_delivery.order_id)
+                    Buffers: shared hit=1576
+                    ->  Seq Scan on shop_order  (cost=0.00..1296.30 rows=50030 width=32) (actual time=0.013..14.332 rows=50030 loops=1)
+                          Buffers: shared hit=796
+                    ->  Hash  (cost=1080.09..1080.09 rows=30009 width=72) (actual time=26.472..26.472 rows=30009 loops=1)
+                          Buckets: 32768  Batches: 1  Memory Usage: 3461kB
+                          Buffers: shared hit=780
+                          ->  Seq Scan on deliveries_delivery  (cost=0.00..1080.09 rows=30009 width=72) (actual time=0.029..17.840 rows=30009 loops=1)
+                                Buffers: shared hit=780
+              ->  Hash  (cost=39.10..39.10 rows=2010 width=43) (actual time=1.147..1.148 rows=2010 loops=1)
+                    Buckets: 2048  Batches: 1  Memory Usage: 164kB
+                    Buffers: shared hit=19
+                    ->  Seq Scan on shop_customer  (cost=0.00..39.10 rows=2010 width=43) (actual time=0.025..0.737 rows=2010 loops=1)
+                          Buffers: shared hit=19
+Planning:
+  Buffers: shared hit=354
+Planning Time: 2.488 ms
+Execution Time: 71.523 ms
