@@ -35,6 +35,11 @@ class Review(models.Model):
         indexes = [
             # A página de uma viatura mostra as avaliações aprovadas dela.
             models.Index(fields=["car", "status"], name="ix_review_car_status"),
+            # Ficha 06 (Filipe): a lista do gestor, sem filtro, da mais recente para a mais
+            # antiga (o ordering). Sem este índice, o PostgreSQL juntava as 20 000 avaliações
+            # à viatura, à marca, ao cliente e ao utilizador e só depois ordenava para ficar
+            # com 20.
+            models.Index(fields=["-created_at"], name="ix_review_created_desc"),
         ]
 
     def __str__(self):
