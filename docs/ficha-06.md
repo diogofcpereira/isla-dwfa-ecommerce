@@ -43,7 +43,7 @@ da aula). Nenhuma lista tem N+1: as queries não passam de 5 em nenhum endpoint.
 |---|---|---|---|---|
 | Diogo Pereira | `GET /api/v1/deliveries/` (gestor) | 4 queries · 40.6 ms na BD · mediana 59.6 ms · p95 84.4 ms | 4 queries · 5.6 ms na BD · mediana 20.8 ms · p95 23.6 ms | Índice em `scheduled_for`, a ordenação da lista: o plano passou de juntar todas as entregas à encomenda e ao cliente e só depois ordenar (`Hash Join` + `Sort`) para ler as 20 primeiras pelo índice (`Index Scan using ix_delivery_scheduled_for`). [commit](https://github.com/diogofcpereira/isla-dwfa-ecommerce/commit/510daa40cbaf152d37c33e5e06249bac7519c53e) |
 | Filipe Cardoso | `GET /api/v1/reviews/` (gestor) | 4 queries · 9.3 ms na BD · mediana 31.3 ms · p95 38.1 ms | 4 queries · 8.4 ms na BD · mediana 30.7 ms · p95 36.3 ms | Índice em `-created_at`, a ordenação da lista (a mais recente primeiro): o plano passou de juntar todas as avaliações à viatura, à marca, ao cliente e ao utilizador e só depois ordenar (`Hash Join` + `Sort`) para ler as 20 primeiras pelo índice (`Index Scan using ix_review_created_desc`). [commit](https://github.com/diogofcpereira/isla-dwfa-ecommerce/commit/2b402fc323fd90e2c76182321ea197d92718fbbc) |
-| Rúben Afonso | `GET /api/v1/test-drives/` | (a preencher pelo Rúben) | | |
+| Rúben Afonso | `GET /api/v1/test-drives/` (gestor) | 4 queries · 49.4 ms na BD · mediana 78.2 ms · p95 98.8 ms | 4 queries · 11.6 ms na BD · mediana 36.4 ms · p95 43.8 ms | Índice em `scheduled_for`, a ordenação da agenda: o plano passou de juntar todas as marcações à viatura, à marca, ao cliente e ao utilizador e só depois ordenar (`Hash Join` + `Sort`) para ler as 20 primeiras pelo índice (`Index Scan using ix_testdrive_scheduled_for`). [commit](https://github.com/diogofcpereira/isla-dwfa-ecommerce/commit/670b92e89379d66e9581620b53f772d60c8b9f03) |
 
 Cada correção tem um teste que conta queries (com 5 linhas e com 20, o mesmo número). O do
 Diogo é `deliveries/tests/test_ficha06_performance.py`.
@@ -79,3 +79,18 @@ Diogo é `deliveries/tests/test_ficha06_performance.py`.
   (`docs/ficha-06/explain-reviews-depois.txt`).
 - **As medições:** `docs/ficha-06/reviews-antes.txt` e `docs/ficha-06/reviews-depois.txt`,
   com o mesmo comando e os mesmos dados. O teste é `reviews/tests/test_ficha06_performance.py`.
+
+### Rúben: os test drives
+
+- **O que o middleware dizia:** poucas queries (4) e muito tempo na base de dados.
+- **O que o plano mostrou** (`docs/ficha-06/explain-test-drives-antes.txt`): a página junta
+  as 20 000 marcações à viatura, à marca, ao cliente e ao utilizador (`Hash Join` × 4) e só
+  depois ordena por `scheduled_for` (`Sort`) para ficar com 20. O índice que havia,
+  `(car, scheduled_for)`, começa pela viatura e só serve a agenda de uma viatura.
+- **A alteração** (`testdrives/migrations/0002_testdrive_scheduled_for_index.py`): um índice
+  em `scheduled_for`. O plano passou a `Index Scan using ix_testdrive_scheduled_for` com
+  `Nested Loop`: lê as 20 primeiras pela ordem certa e só junta essas
+  (`docs/ficha-06/explain-test-drives-depois.txt`).
+- **As medições:** `docs/ficha-06/test-drives-antes.txt` e
+  `docs/ficha-06/test-drives-depois.txt`, com o mesmo comando e os mesmos dados. O teste é
+  `testdrives/tests/test_ficha06_performance.py`.
