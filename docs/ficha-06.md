@@ -36,3 +36,30 @@ O mais lento é `GET /api/v1/orders/`: poucas queries, mas quase todo o tempo é
 de dados. O total de cada encomenda vem de um `annotate(Sum(...))`, que faz um `GROUP BY`
 sobre as 50 000 encomendas e as linhas delas em cada página, antes do `LIMIT 20` (o problema
 da aula). Nenhuma lista tem N+1: as queries não passam de 5 em nenhum endpoint.
+
+## Uma correção por elemento
+
+| Elemento | Endpoint | Antes | Depois | O que mudou |
+|---|---|---|---|---|
+| Diogo Pereira | `GET /api/v1/deliveries/` (gestor) | 4 queries · 40.6 ms na BD · mediana 59.6 ms · p95 84.4 ms | 4 queries · 5.6 ms na BD · mediana 20.8 ms · p95 23.6 ms | Índice em `scheduled_for`, a ordenação da lista: o plano passou de juntar todas as entregas à encomenda e ao cliente e só depois ordenar (`Hash Join` + `Sort`) para ler as 20 primeiras pelo índice (`Index Scan using ix_delivery_scheduled_for`). [commit](https://github.com/diogofcpereira/isla-dwfa-ecommerce/commit/510daa40cbaf152d37c33e5e06249bac7519c53e) |
+| Filipe Cardoso | `GET /api/v1/reviews/` | (a preencher pelo Filipe) | | |
+| Rúben Afonso | `GET /api/v1/test-drives/` | (a preencher pelo Rúben) | | |
+
+Cada correção tem um teste que conta queries (com 5 linhas e com 20, o mesmo número). O do
+Diogo é `deliveries/tests/test_ficha06_performance.py`.
+
+### Diogo: as entregas
+
+- **O que o middleware dizia:** poucas queries (4) e muito tempo na base de dados. Pela
+  tabela do Passo 4 da ficha, isto pede um `explain(analyze=True)`.
+- **O que o plano mostrou** (`docs/ficha-06/explain-deliveries-antes.txt`): a página faz
+  `Hash Join` das entregas com as encomendas e os clientes e um `Sort` por `scheduled_for`,
+  sobre as 30 000 entregas, para ficar com 20. O índice que já existia, `(status,
+  scheduled_for)`, começa pelo estado e só serve a lista filtrada por estado.
+- **A alteração** (`deliveries/migrations/0002_delivery_scheduled_for_index.py`): um índice
+  em `scheduled_for`. O plano passou a `Index Scan using ix_delivery_scheduled_for` com
+  `Nested Loop`: lê as 20 primeiras pela ordem certa e só junta essas
+  (`docs/ficha-06/explain-deliveries-depois.txt`).
+- **As medições:** `docs/ficha-06/deliveries-antes.txt` e `docs/ficha-06/deliveries-depois.txt`,
+  com o mesmo comando e os mesmos dados. O tempo que fica na base de dados é sobretudo o
+  `COUNT(*)` da paginação.
