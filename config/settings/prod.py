@@ -37,9 +37,5 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 
 # Os logs vão para a consola: `docker compose logs backend` mostra-os.
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {"console": {"class": "logging.StreamHandler"}},
-    "root": {"handlers": ["console"], "level": "INFO"},
-}
+# Ficha 06: o LOGGING é o de base.py (uma linha de JSON por evento, LOG_JSON=true por omissão);
+# este ficheiro deixou de ter o seu, que escrevia só a mensagem e perdia os campos.

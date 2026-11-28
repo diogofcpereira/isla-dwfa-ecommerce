@@ -9,3 +9,6 @@ DEBUG = False
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+
+# Ficha 06: texto nos testes (o JSON tem o seu próprio teste em core/tests/test_ficha06.py).
+LOGGING["handlers"]["console"]["formatter"] = "text"  # noqa: F405

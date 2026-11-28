@@ -86,6 +86,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Ficha 06: no fim, para medir tudo o que acontece dentro da vista (queries incluídas).
+    "core.middleware.RequestLogMiddleware",
 ]
 
 # Ficha 03 · Parte 3: só estas origens podem ler respostas da API num browser.
@@ -155,4 +157,28 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,  # cada refresh devolve um refresh novo
     "BLACKLIST_AFTER_ROTATION": True,  # o refresh antigo deixa de servir
     "UPDATE_LAST_LOGIN": True,
+}
+
+# Ficha 06: logs para o stdout; quem os guarda é a plataforma (Docker, Loki, ELK).
+#   LOG_JSON=true  → uma linha de JSON por evento (o valor por omissão, e o de produção)
+#   LOG_JSON=false → texto legível (é o que dev.py usa, a não ser que o .env diga true)
+LOG_JSON = env.bool("LOG_JSON", default=True)
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "json": {"()": "core.logs.JsonFormatter"},
+        "text": {"format": "{asctime} {levelname:<7} {name} {message}", "style": "{"},
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json" if LOG_JSON else "text",
+        },
+    },
+    "root": {"handlers": ["console"], "level": env("LOG_LEVEL", default="INFO")},
+    "loggers": {
+        # O runserver já escreve a sua própria linha por pedido: fica só com os avisos.
+        "django.server": {"level": "WARNING"},
+    },
 }
