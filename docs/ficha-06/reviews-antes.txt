@@ -1,0 +1,9 @@
+http://localhost:8000/api/v1/reviews/
+  30 pedidos · requests, 1 em paralelo · parallel, HTTP [200]
+  resposta · response       4.3 kB
+  mediana · median         31.3 ms
+  p95                      38.1 ms
+  max                      40.8 ms
+  débito · throughput      31.5 req/s
+  servidor · server           4 queries, 9.3 ms na BD · in the DB
+| `GET /api/v1/reviews/` | gestor | 4 | 9.3 | 31.3 | 38.1 |
