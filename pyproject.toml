@@ -51,6 +51,8 @@ omit = [
     "config/wsgi.py",
     "config/settings/dev.py",
     "config/settings/prod.py",
+    # Ficha 06: o script de medição é uma ferramenta de linha de comandos, não a aplicação.
+    "scripts/*",
 ]
 
 [tool.coverage.report]

@@ -1,0 +1,90 @@
+http://localhost:8000/api/v1/orders/
+  30 pedidos · requests, 1 em paralelo · parallel, HTTP [200]
+  resposta · response       5.4 kB
+  mediana · median        234.4 ms
+  p95                     298.3 ms
+  max                     323.6 ms
+  débito · throughput       4.1 req/s
+  servidor · server           5 queries, 216.1 ms na BD · in the DB
+| `GET /api/v1/orders/` | gestor | 5 | 216.1 | 234.4 | 298.3 |
+http://localhost:8000/api/v1/deliveries/
+  30 pedidos · requests, 1 em paralelo · parallel, HTTP [200]
+  resposta · response       5.8 kB
+  mediana · median         51.8 ms
+  p95                      63.6 ms
+  max                      72.8 ms
+  débito · throughput      18.6 req/s
+  servidor · server           4 queries, 35.5 ms na BD · in the DB
+| `GET /api/v1/deliveries/` | gestor | 4 | 35.5 | 51.8 | 63.6 |
+http://localhost:8000/api/v1/reviews/
+  30 pedidos · requests, 1 em paralelo · parallel, HTTP [200]
+  resposta · response       4.3 kB
+  mediana · median         48.1 ms
+  p95                      51.0 ms
+  max                      51.3 ms
+  débito · throughput      21.0 req/s
+  servidor · server           4 queries, 30.9 ms na BD · in the DB
+| `GET /api/v1/reviews/` | gestor | 4 | 30.9 | 48.1 | 51.0 |
+http://localhost:8000/api/v1/test-drives/
+  30 pedidos · requests, 1 em paralelo · parallel, HTTP [200]
+  resposta · response       4.4 kB
+  mediana · median         49.7 ms
+  p95                      59.6 ms
+  max                      67.6 ms
+  débito · throughput      20.0 req/s
+  servidor · server           4 queries, 30.6 ms na BD · in the DB
+| `GET /api/v1/test-drives/` | gestor | 4 | 30.6 | 49.7 | 59.6 |
+http://localhost:8000/api/v1/payments/
+  30 pedidos · requests, 1 em paralelo · parallel, HTTP [200]
+  resposta · response       2.7 kB
+  mediana · median         54.3 ms
+  p95                      68.4 ms
+  max                      68.7 ms
+  débito · throughput      18.4 req/s
+  servidor · server           4 queries, 37.0 ms na BD · in the DB
+| `GET /api/v1/payments/` | gestor | 4 | 37.0 | 54.3 | 68.4 |
+http://localhost:8000/api/v1/customers/
+  30 pedidos · requests, 1 em paralelo · parallel, HTTP [200]
+  resposta · response       2.5 kB
+  mediana · median         17.9 ms
+  p95                      22.4 ms
+  max                      24.2 ms
+  débito · throughput      53.7 req/s
+  servidor · server           4 queries, 4.2 ms na BD · in the DB
+| `GET /api/v1/customers/` | gestor | 4 | 4.2 | 17.9 | 22.4 |
+http://localhost:8000/api/v1/cars/
+  30 pedidos · requests, 1 em paralelo · parallel, HTTP [200]
+  resposta · response       4.9 kB
+  mediana · median         19.3 ms
+  p95                      30.4 ms
+  max                      32.6 ms
+  débito · throughput      46.6 req/s
+  servidor · server           3 queries, 3.0 ms na BD · in the DB
+| `GET /api/v1/cars/` | gestor | 3 | 3.0 | 19.3 | 30.4 |
+http://localhost:8000/api/v1/order-items/
+  30 pedidos · requests, 1 em paralelo · parallel, HTTP [200]
+  resposta · response       2.2 kB
+  mediana · median         25.0 ms
+  p95                      30.4 ms
+  max                      41.7 ms
+  débito · throughput      38.6 req/s
+  servidor · server           4 queries, 8.9 ms na BD · in the DB
+| `GET /api/v1/order-items/` | gestor | 4 | 8.9 | 25.0 | 30.4 |
+http://localhost:8000/api/v1/deliveries/?overdue=true
+  30 pedidos · requests, 1 em paralelo · parallel, HTTP [200]
+  resposta · response       5.3 kB
+  mediana · median         35.0 ms
+  p95                      47.2 ms
+  max                      48.0 ms
+  débito · throughput      28.1 req/s
+  servidor · server           4 queries, 17.1 ms na BD · in the DB
+| `GET /api/v1/deliveries/?overdue=true` | gestor | 4 | 17.1 | 35.0 | 47.2 |
+http://localhost:8000/api/v1/deliveries/summary/
+  30 pedidos · requests, 1 em paralelo · parallel, HTTP [200]
+  resposta · response       0.1 kB
+  mediana · median         19.4 ms
+  p95                      26.4 ms
+  max                      26.8 ms
+  débito · throughput      48.7 req/s
+  servidor · server           3 queries, 7.4 ms na BD · in the DB
+| `GET /api/v1/deliveries/summary/` | gestor | 3 | 7.4 | 19.4 | 26.4 |
