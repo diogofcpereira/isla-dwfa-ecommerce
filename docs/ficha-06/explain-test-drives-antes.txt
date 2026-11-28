@@ -1,0 +1,44 @@
+Limit  (cost=1339.36..1339.41 rows=20 width=703) (actual time=39.700..39.709 rows=20 loops=1)
+  Buffers: shared hit=283 dirtied=1
+  ->  Sort  (cost=1339.36..1389.37 rows=20006 width=703) (actual time=39.699..39.706 rows=20 loops=1)
+        Sort Key: testdrives_testdrive.scheduled_for
+        Sort Method: top-N heapsort  Memory: 38kB
+        Buffers: shared hit=283 dirtied=1
+        ->  Hash Join  (cost=177.42..807.01 rows=20006 width=703) (actual time=1.938..27.636 rows=20006 loops=1)
+              Hash Cond: (shop_customer.user_id = accounts_user.id)
+              Buffers: shared hit=280 dirtied=1
+              ->  Hash Join  (cost=81.17..658.13 rows=20006 width=531) (actual time=0.891..20.144 rows=20006 loops=1)
+                    Hash Cond: (testdrives_testdrive.customer_id = shop_customer.id)
+                    Buffers: shared hit=229 dirtied=1
+                    ->  Hash Join  (cost=16.95..541.28 rows=20006 width=488) (actual time=0.131..13.736 rows=20006 loops=1)
+                          Hash Cond: (shop_car.brand_id = shop_brand.id)
+                          Buffers: shared hit=210 dirtied=1
+                          ->  Hash Join  (cost=2.45..473.15 rows=20006 width=124) (actual time=0.100..9.043 rows=20006 loops=1)
+                                Hash Cond: (testdrives_testdrive.car_id = shop_car.id)
+                                Buffers: shared hit=209
+                                ->  Seq Scan on testdrives_testdrive  (cost=0.00..407.06 rows=20006 width=50) (actual time=0.006..1.868 rows=20006 loops=1)
+                                      Buffers: shared hit=207
+                                ->  Hash  (cost=2.20..2.20 rows=20 width=74) (actual time=0.026..0.027 rows=20 loops=1)
+                                      Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                                      Buffers: shared hit=2
+                                      ->  Seq Scan on shop_car  (cost=0.00..2.20 rows=20 width=74) (actual time=0.006..0.017 rows=20 loops=1)
+                                            Buffers: shared hit=2
+                          ->  Hash  (cost=12.00..12.00 rows=200 width=364) (actual time=0.013..0.013 rows=9 loops=1)
+                                Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                Buffers: shared hit=1 dirtied=1
+                                ->  Seq Scan on shop_brand  (cost=0.00..12.00 rows=200 width=364) (actual time=0.007..0.008 rows=9 loops=1)
+                                      Buffers: shared hit=1 dirtied=1
+                    ->  Hash  (cost=39.10..39.10 rows=2010 width=43) (actual time=0.697..0.698 rows=2010 loops=1)
+                          Buckets: 2048  Batches: 1  Memory Usage: 164kB
+                          Buffers: shared hit=19
+                          ->  Seq Scan on shop_customer  (cost=0.00..39.10 rows=2010 width=43) (actual time=0.005..0.222 rows=2010 loops=1)
+                                Buffers: shared hit=19
+              ->  Hash  (cost=71.11..71.11 rows=2011 width=172) (actual time=0.979..0.979 rows=2011 loops=1)
+                    Buckets: 2048  Batches: 1  Memory Usage: 425kB
+                    Buffers: shared hit=51
+                    ->  Seq Scan on accounts_user  (cost=0.00..71.11 rows=2011 width=172) (actual time=0.007..0.164 rows=2011 loops=1)
+                          Buffers: shared hit=51
+Planning:
+  Buffers: shared hit=628
+Planning Time: 2.915 ms
+Execution Time: 39.970 ms

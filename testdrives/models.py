@@ -1,8 +1,8 @@
 """Recurso do Rúben: a marcação de um test drive.
 
-O cliente pede um horário para experimentar uma viatura; o gestor confirma ou
-recusa; o cliente pode cancelar enquanto o pedido estiver ativo. Os horários são
-de hora a hora e cada viatura só tem uma marcação ativa por horário.
+O cliente pede um horário para experimentar uma viatura; o gestor confirma ou recusa; o
+cliente pode cancelar enquanto o pedido estiver ativo. Os horários são de hora a hora e
+cada viatura só tem uma marcação ativa por horário.
 """
 
 from django.db import models
@@ -43,6 +43,11 @@ class TestDrive(models.Model):
         ]
         indexes = [
             models.Index(fields=["car", "scheduled_for"], name="ix_testdrive_car_date"),
+            # Ficha 06 (Rúben): a agenda do gestor, sem filtro, por ordem de data (o ordering).
+            # O índice de cima começa pela viatura e não serve esta ordenação: sem este, o
+            # PostgreSQL juntava as 20 000 marcações à viatura, à marca, ao cliente e ao
+            # utilizador e só depois ordenava para ficar com 20.
+            models.Index(fields=["scheduled_for"], name="ix_testdrive_scheduled_for"),
         ]
 
     def __str__(self):

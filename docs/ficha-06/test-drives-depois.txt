@@ -1,0 +1,9 @@
+http://localhost:8000/api/v1/test-drives/
+  30 pedidos · requests, 1 em paralelo · parallel, HTTP [200]
+  resposta · response       4.4 kB
+  mediana · median         36.4 ms
+  p95                      43.8 ms
+  max                      46.5 ms
+  débito · throughput      26.2 req/s
+  servidor · server           4 queries, 11.6 ms na BD · in the DB
+| `GET /api/v1/test-drives/` | gestor | 4 | 11.6 | 36.4 | 43.8 |

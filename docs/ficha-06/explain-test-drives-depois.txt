@@ -1,0 +1,48 @@
+Limit  (cost=1.17..5.35 rows=20 width=703) (actual time=0.169..0.386 rows=20 loops=1)
+  Buffers: shared hit=179 read=2
+  ->  Nested Loop  (cost=1.17..4183.94 rows=20006 width=703) (actual time=0.166..0.380 rows=20 loops=1)
+        Buffers: shared hit=179 read=2
+        ->  Nested Loop  (cost=0.88..2854.76 rows=20006 width=531) (actual time=0.148..0.304 rows=20 loops=1)
+              Buffers: shared hit=119 read=2
+              ->  Nested Loop  (cost=0.59..1752.82 rows=20006 width=488) (actual time=0.132..0.230 rows=20 loops=1)
+                    Buffers: shared hit=59 read=2
+                    ->  Nested Loop  (cost=0.43..1228.64 rows=20006 width=124) (actual time=0.103..0.171 rows=20 loops=1)
+                          Buffers: shared hit=41 read=2
+                          ->  Index Scan using ix_testdrive_scheduled_for on testdrives_testdrive  (cost=0.29..738.81 rows=20006 width=50) (actual time=0.075..0.080 rows=20 loops=1)
+                                Buffers: shared hit=1 read=2
+                          ->  Memoize  (cost=0.15..0.17 rows=1 width=74) (actual time=0.004..0.004 rows=1 loops=20)
+                                Cache Key: testdrives_testdrive.car_id
+                                Cache Mode: logical
+                                Hits: 0  Misses: 20  Evictions: 0  Overflows: 0  Memory Usage: 4kB
+                                Buffers: shared hit=40
+                                ->  Index Scan using shop_car_pkey on shop_car  (cost=0.14..0.16 rows=1 width=74) (actual time=0.002..0.002 rows=1 loops=20)
+                                      Index Cond: (id = testdrives_testdrive.car_id)
+                                      Buffers: shared hit=40
+                    ->  Memoize  (cost=0.15..2.57 rows=1 width=364) (actual time=0.002..0.002 rows=1 loops=20)
+                          Cache Key: shop_car.brand_id
+                          Cache Mode: logical
+                          Hits: 11  Misses: 9  Evictions: 0  Overflows: 0  Memory Usage: 2kB
+                          Buffers: shared hit=18
+                          ->  Index Scan using shop_brand_pkey on shop_brand  (cost=0.14..2.56 rows=1 width=364) (actual time=0.004..0.004 rows=1 loops=9)
+                                Index Cond: (id = shop_car.brand_id)
+                                Buffers: shared hit=18
+              ->  Memoize  (cost=0.29..0.31 rows=1 width=43) (actual time=0.003..0.003 rows=1 loops=20)
+                    Cache Key: testdrives_testdrive.customer_id
+                    Cache Mode: logical
+                    Hits: 0  Misses: 20  Evictions: 0  Overflows: 0  Memory Usage: 3kB
+                    Buffers: shared hit=60
+                    ->  Index Scan using shop_customer_pkey on shop_customer  (cost=0.28..0.30 rows=1 width=43) (actual time=0.002..0.002 rows=1 loops=20)
+                          Index Cond: (id = testdrives_testdrive.customer_id)
+                          Buffers: shared hit=60
+        ->  Memoize  (cost=0.29..0.42 rows=1 width=172) (actual time=0.003..0.003 rows=1 loops=20)
+              Cache Key: shop_customer.user_id
+              Cache Mode: logical
+              Hits: 0  Misses: 20  Evictions: 0  Overflows: 0  Memory Usage: 6kB
+              Buffers: shared hit=60
+              ->  Index Scan using accounts_user_pkey on accounts_user  (cost=0.28..0.41 rows=1 width=172) (actual time=0.002..0.002 rows=1 loops=20)
+                    Index Cond: (id = shop_customer.user_id)
+                    Buffers: shared hit=60
+Planning:
+  Buffers: shared hit=638 read=1
+Planning Time: 5.385 ms
+Execution Time: 0.873 ms
