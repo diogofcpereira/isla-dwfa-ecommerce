@@ -94,3 +94,28 @@ Diogo é `deliveries/tests/test_ficha06_performance.py`.
 - **As medições:** `docs/ficha-06/test-drives-antes.txt` e
   `docs/ficha-06/test-drives-depois.txt`, com o mesmo comando e os mesmos dados. O teste é
   `testdrives/tests/test_ficha06_performance.py`.
+
+## Parte 3 — opção B: um log estruturado
+
+Escolhemos a **opção B**: os eventos das entregas em log estruturado (`deliveries/events.py`),
+`delivery_scheduled`, `delivery_shipped` e `delivery_completed`, cada um uma linha de JSON com
+`delivery_id`, `order_id`, `status` e `user_id`, escritos com `transaction.on_commit` (um 409
+ou um rollback não deixam evento). Nos logs vão ids: a morada, o nome e o email do cliente
+ficam de fora.
+
+**Porquê B:** o `JsonFormatter` do Passo 1 já dá uma linha pesquisável por evento, sem
+dependências novas. A opção A obrigava a um `/metrics` que teria de ficar fechado no Nginx e,
+como o `compose.prod.yaml` corre o Gunicorn com 3 processos, a configurar o
+`PROMETHEUS_MULTIPROC_DIR` para os contadores não descerem.
+
+## Para correr
+
+```sh
+docker compose up -d                                  # PostgreSQL
+uv run python manage.py migrate
+uv run python manage.py seed && uv run python manage.py seed_big
+uv run python manage.py runserver                     # LOG_JSON=true no .env para ver o JSON
+uv run python scripts/measure.py http://localhost:8000/api/v1/deliveries/ \
+    -u gestor -p drivenow-demo-2026 --row gestor
+uv run pytest
+```

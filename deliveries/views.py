@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from shop.permissions import IsGestorOrReadOnly, is_gestor
 from shop.services import Conflict
 
+from .events import log_delivery_event
 from .filters import DeliveryFilter, overdue_q
 from .models import Delivery
 from .notifications import notify_customer
@@ -62,6 +63,10 @@ class DeliveryViewSet(
             raise ValidationError({"order": "Esta encomenda já tem uma entrega."}) from None
         # M2 (extra): o cliente fica a saber a data e a morada, só depois do commit.
         transaction.on_commit(partial(notify_customer, delivery, "scheduled"))
+        # Ficha 06 · Parte 3: o evento de negócio, também só depois do commit.
+        transaction.on_commit(
+            partial(log_delivery_event, "delivery_scheduled", delivery, self.request.user)
+        )
 
     def perform_update(self, serializer):
         # Uma entrega concluída é um registo do que aconteceu: a data e a morada já não mudam.
@@ -88,6 +93,9 @@ class DeliveryViewSet(
     def ship(self, request, pk=None):
         delivery = ship_delivery(self.get_object())
         transaction.on_commit(partial(notify_customer, delivery, "shipped"))
+        transaction.on_commit(
+            partial(log_delivery_event, "delivery_shipped", delivery, request.user)
+        )
         return Response(self.get_serializer(delivery).data)
 
     @extend_schema(request=None, responses=STATE_CHANGE)
@@ -95,4 +103,7 @@ class DeliveryViewSet(
     def complete(self, request, pk=None):
         delivery = complete_delivery(self.get_object())
         transaction.on_commit(partial(notify_customer, delivery, "delivered"))
+        transaction.on_commit(
+            partial(log_delivery_event, "delivery_completed", delivery, request.user)
+        )
         return Response(self.get_serializer(delivery).data)
